@@ -44,23 +44,60 @@ export default function ChatPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <img src="/icons/logo.svg" alt="Qualtech Logo" className="w-[120px] h-[40px] absolute top-4 left-10" />
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <button 
+              onClick={() => window.history.back()}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            {/* Qualtech Logo */}
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 border-2 border-blue-500 rounded-lg flex items-center justify-center bg-white">
+                <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+              </div>
+              <span className="text-sm font-medium text-gray-600">qualtech</span>
+            </div>
+          </div>
+
+          {/* Center - miFIN.AI branding */}
+          <div className="flex items-center space-x-6">
+            <h1 className="text-2xl font-bold">
+              <span className="text-blue-600">mi</span>
+              <span className="text-blue-600">FIN</span>
+              <span className="text-green-500">.AI</span>
+            </h1>
+          </div>
+
+          {/* Right side - Menu */}
+          <div className="flex items-center space-x-2">
+            <div className="w-6 h-6 bg-gradient-to-r from-blue-400 to-teal-400 rounded-full"></div>
+            <button className="text-gray-600 hover:text-gray-900">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content - Only Welcome and Documents screens */}
       <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-8">
-        <div 
-          className="p-1 rounded-[30px]"
-          style={{
-            background: 'linear-gradient(180deg, #2E71FE 0%, #6AFFB6 100%)',
-            boxShadow: '0px 0px 20px 0px #00000026'
-          }}
-        >
-          <div className="bg-white h-[600px] flex flex-col relative overflow-hidden rounded-[26px]">
+        <div className="bg-white rounded-3xl shadow-lg border-2 border-blue-200 h-[600px] flex flex-col relative overflow-hidden">
           
           {/* Brand Header */}
           <div className="text-center py-8 bg-gradient-to-b from-blue-50 to-white">
             <h2 className="text-3xl font-bold">
-            <span className="text-blue-600">mi</span>
-              <span className="text-blue-600">FIN</span>
-              <span className="text-green-500">.AI</span>
+              <span className="text-blue-600">Lend</span>
+              <span className="text-teal-400">Smart</span>
+              <span className="text-blue-600">.AI</span>
             </h2>
           </div>
 
@@ -122,7 +159,6 @@ export default function ChatPage() {
 
           <div className="text-center pb-6">
             <p className="text-gray-500 text-sm">Speak your answers</p>
-          </div>
           </div>
         </div>
       </div>
