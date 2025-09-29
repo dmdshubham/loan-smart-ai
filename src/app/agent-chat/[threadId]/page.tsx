@@ -3,28 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { useAgentChat } from '@/hooks/useAgentChat';
+import RightPanel from '@/components/RightPanel';
 
-interface Message {
-  id: number;
-  text: string;
-  isBot: boolean;
-  timestamp: Date;
-}
 
-interface Step {
-  id: number;
-  title: string;
-  status: 'pending' | 'active' | 'completed' | 'error';
-  description?: string;
-}
-
-interface ApplicantData {
-  personalInfo: {
-    aadharNo?: string;
-    mobileNumber?: string;
-    email?: string;
-  };
-}
 
 export default function AgentChatPage() {
   const params = useParams();
@@ -44,26 +25,6 @@ export default function AgentChatPage() {
     sendMessage,
   } = useAgentChat(initialThreadId);
   
-  // streaming accumulation is managed by useAgentChat
-  
-  const [steps] = useState<Step[]>([
-    { id: 1, title: 'Personal Information', status: 'active', description: 'Basic details and contact info' },
-    { id: 2, title: 'Demographics', status: 'pending', description: 'Age, address, and personal details' },
-    { id: 3, title: 'Employment Details', status: 'pending', description: 'Work information and income' },
-    { id: 4, title: 'Bank Details', status: 'pending', description: 'Banking and financial information' },
-    { id: 5, title: 'Document Upload', status: 'pending', description: 'Required documents submission' },
-    { id: 6, title: 'Verification', status: 'pending', description: 'Final review and approval' }
-  ]);
-
-  const [applicantData] = useState<ApplicantData>({
-    personalInfo: {
-      aadharNo: '**** **** 1983',
-      mobileNumber: '7482745274',
-      email: 'rohan.mehra@gmail.com'
-    }
-  });
-
-  // stream initialization and cleanup handled by useAgentChat
 
   // Auto-scroll to bottom when messages change or streaming updates
   useEffect(() => {
@@ -127,7 +88,6 @@ export default function AgentChatPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Main Content */}
       <div className="flex-1 flex max-w-7xl mx-auto w-full">
-        {/* Left Panel - Chat */}
         <div className="flex-1 px-4 my-4">
           <div 
             className="p-1 rounded-[30px] h-[calc(100vh-42px)]"
@@ -328,110 +288,7 @@ export default function AgentChatPage() {
           </div>
         </div>
 
-        {/* Right Panel - Applicant Details */}
-        <div className="w-96 bg-white shadow-lg border-l border-gray-200 h-screen ">
-          <div className="p-6">
-            {/* Applicant Header */}
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-xl font-black text-gray-900">Applicant Details</h2>
-              <button className="text-gray-400 hover:text-gray-600">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-            </div>
-
-            {/* User Icons */}
-            <div className="flex items-center space-x-4 mb-8">
-              <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center shadow-lg">
-                <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                </svg>
-              </div>
-              <div className="flex space-x-3">
-                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center shadow-sm">
-                  <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                  </svg>
-                </div>
-                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center shadow-sm">
-                  <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Collapsible Sections */}
-            <div className="space-y-4">
-              {/* Personal Info Section */}
-              <div className="border border-gray-200 rounded-lg shadow-sm">
-                <button className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors">
-                  <span className="font-bold text-gray-900">Personal Info</span>
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                <div className="px-5 pb-5 space-y-4">
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-sm font-medium text-gray-600">Adhar No.</span>
-                    <div className="flex items-center space-x-3">
-                      <span className="text-sm font-semibold text-gray-900">{applicantData.personalInfo.aadharNo}</span>
-                      <div className="flex items-center space-x-1">
-                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow-sm">
-                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <svg className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-sm font-medium text-gray-600">Mobile Number</span>
-                    <div className="flex items-center space-x-3">
-                      <span className="text-sm font-semibold text-gray-900">{applicantData.personalInfo.mobileNumber}</span>
-                      <div className="flex items-center space-x-1">
-                        <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-sm">
-                          <span className="text-white text-xs font-bold">!</span>
-                        </div>
-                        <svg className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-sm font-medium text-gray-600">Email</span>
-                    <div className="flex items-center space-x-3">
-                      <span className="text-sm font-semibold text-gray-900">{applicantData.personalInfo.email}</span>
-                      <svg className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Other sections */}
-              {['Demographics', 'Employment Details', 'Bank Details'].map((section) => (
-                <div key={section} className="border border-gray-200 rounded-lg shadow-sm">
-                  <button className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors">
-                    <span className="font-bold text-gray-900">{section}</span>
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <RightPanel conversationId={actualThreadId} />
 
         
       </div>
