@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { useAgentChat } from '@/hooks/useAgentChat';
 import FileUpload from '@/components/FileUpload';
 import RightPanel from '@/components/RightPanel';
+import { speechRecognitionService } from '@/service/speechRecognition';
 
 
 
@@ -14,6 +15,8 @@ export default function AgentChatPage() {
   const [isListening, setIsListening] = useState(false);
   const [inputText, setInputText] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<string[]>([]);
+  const [speechText, setSpeechText] = useState('');
+  const [isSpeechSupported, setIsSpeechSupported] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -35,6 +38,70 @@ export default function AgentChatPage() {
     }
   }, [messages, currentStreamingMessage]);
 
+  // Initialize speech recognition
+  useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const isSupported = speechRecognitionService.isSupported();
+      setIsSpeechSupported(isSupported);
+
+      if (isSupported) {
+        speechRecognitionService.setCallbacks({
+          onStart: () => {
+            setIsListening(true);
+            setSpeechText('');
+          },
+          onResult: (result) => {
+            // Show interim transcript inside the input box
+            if (!result.isFinal) {
+              setSpeechText(result.transcript);
+              setInputText(result.transcript);
+            }
+          },
+          onFinalResult: (transcript) => {
+            setSpeechText(transcript);
+            setInputText(transcript);
+            // Auto-send the final transcript
+            if (transcript.trim()) {
+              handleSendSpeechMessage(transcript);
+            }
+          },
+          onEnd: (final) => {
+            setIsListening(false);
+            // Ensure we don't concatenate with previous input; prefer final transcript
+            if (final && final.trim()) {
+              setInputText(final);
+            }
+            setSpeechText('');
+          },
+          onError: (error) => {
+            setIsListening(false);
+            setSpeechText('');
+            console.error('Speech recognition error:', error);
+            // You could show a toast notification here
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to initialize speech recognition:', error);
+      setIsSpeechSupported(false);
+    }
+
+    return () => {
+      try {
+        if (speechRecognitionService.isSupported()) {
+          speechRecognitionService.stopListening();
+        }
+      } catch (error) {
+        console.error('Error cleaning up speech recognition:', error);
+      }
+    };
+  }, []);
+
   const handleSendMessage = async () => {
     if (!inputText.trim() && attachedFiles.length === 0) return;
     const text = inputText;
@@ -42,9 +109,16 @@ export default function AgentChatPage() {
     
     setInputText('');
     setAttachedFiles([]);
-    
     // Send message with attached files
     await sendMessage(text, files);
+  };
+
+  const handleSendSpeechMessage = async (transcript: string) => {
+    const text = transcript.trim();
+    if (!text) return;
+    setInputText('');
+    speechRecognitionService.clearTranscripts();
+    await sendMessage(text, []);
   };
 
   const handleFileUploaded = (fileUrl: string) => {
@@ -64,8 +138,19 @@ export default function AgentChatPage() {
   };
 
   const toggleListening = () => {
-    setIsListening(!isListening);
-    // Here you would implement speech recognition
+    if (!isSpeechSupported) {
+      console.warn('Speech recognition not supported');
+      return;
+    }
+
+    if (isListening) {
+      speechRecognitionService.stopListening();
+    } else {
+      // Clear the input before starting a fresh session to avoid concatenation
+      setInputText('');
+      setSpeechText('');
+      speechRecognitionService.startListening();
+    }
   };
 
   if (isLoading) {
@@ -232,10 +317,13 @@ export default function AgentChatPage() {
                   
                   <button
                     onClick={toggleListening}
+                    disabled={!isSpeechSupported}
                     className={`relative w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl ${
-                      isListening 
-                        ? 'bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-600 shadow-purple-500/50' 
-                        : 'bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 hover:from-blue-600 hover:via-purple-700 hover:to-indigo-800 shadow-blue-500/30'
+                      !isSpeechSupported
+                        ? 'bg-gray-300 cursor-not-allowed opacity-50'
+                        : isListening 
+                          ? 'bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-600 shadow-purple-500/50' 
+                          : 'bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 hover:from-blue-600 hover:via-purple-700 hover:to-indigo-800 shadow-blue-500/30'
                     }`}
                     style={{
                       boxShadow: isListening 
@@ -275,8 +363,14 @@ export default function AgentChatPage() {
               </div>
               
               <div className="text-center mt-2">
-                <p className="text-gray-500 text-sm font-medium">Speak your answers</p>
+                {isSpeechSupported ? (
+                  <p className="text-gray-500 text-sm font-medium">Speak your answers</p>
+                ) : (
+                  <p className="text-gray-400 text-sm font-medium">Voice input not supported in this browser</p>
+                )}
               </div>
+
+              {/* Speech Text Indicator (removed in favor of showing in input) */}
 
               {/* Text Input Area */}
               <div className="mt-4">
