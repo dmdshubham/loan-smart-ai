@@ -17,7 +17,7 @@ interface UseAgentChatReturn {
   isThinking: boolean;
   isStreaming: boolean;
   currentStreamingMessage: string;
-  sendMessage: (text: string) => Promise<void>;
+  sendMessage: (text: string, fileUrls?: string[]) => Promise<void>;
 }
 
 export function useAgentChat(initialThreadId: string): UseAgentChatReturn {
@@ -152,9 +152,9 @@ export function useAgentChat(initialThreadId: string): UseAgentChatReturn {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialThreadId]);
 
-  const sendMessage = async (text: string) => {
+  const sendMessage = async (text: string, fileUrls: string[] = []) => {
     const trimmed = (text || '').trim();
-    if (!trimmed) return;
+    if (!trimmed && fileUrls.length === 0) return;
 
     if (isStreamingRef.current) finalizeStreamingMessage();
     setIsStreaming(false);
@@ -163,15 +163,29 @@ export function useAgentChat(initialThreadId: string): UseAgentChatReturn {
     setIsThinking(true);
 
     // Add user message
-    setMessages(prev => [...prev, { id: Date.now(), text: trimmed, isBot: false, timestamp: new Date() }]);
+    const messageText = trimmed || (fileUrls.length > 0 ? `📎 Attached ${fileUrls.length} file(s)` : '');
+    setMessages(prev => [...prev, { id: Date.now(), text: messageText, isBot: false, timestamp: new Date() }]);
 
     try {
+      // Prepare content array
+      const content: Array<{ type: 'text' | 'image_url'; text?: string; image_url?: { url: string } }> = [];
+      
+      // Add text content if available
+      if (trimmed) {
+        content.push({ type: 'text', text: trimmed });
+      }
+      
+      // Add file URLs as image_url content (assuming they're images for now)
+      fileUrls.forEach(url => {
+        content.push({ type: 'image_url', image_url: { url } });
+      });
+
       const response = await startLoanAgentStream({
         threadId: actualThreadId,
         input: {
           messages: [{
             role: 'user',
-            content: [{ type: 'text', text: trimmed }]
+            content
           }]
         }
       });

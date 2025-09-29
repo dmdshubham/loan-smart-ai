@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { useAgentChat } from '@/hooks/useAgentChat';
+import FileUpload from '@/components/FileUpload';
 import RightPanel from '@/components/RightPanel';
 
 
@@ -12,6 +13,7 @@ export default function AgentChatPage() {
   const initialThreadId = params.threadId as string;
   const [isListening, setIsListening] = useState(false);
   const [inputText, setInputText] = useState('');
+  const [attachedFiles, setAttachedFiles] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -34,10 +36,24 @@ export default function AgentChatPage() {
   }, [messages, currentStreamingMessage]);
 
   const handleSendMessage = async () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim() && attachedFiles.length === 0) return;
     const text = inputText;
+    const files = [...attachedFiles];
+    
     setInputText('');
-    await sendMessage(text);
+    setAttachedFiles([]);
+    
+    // Send message with attached files
+    await sendMessage(text, files);
+  };
+
+  const handleFileUploaded = (fileUrl: string) => {
+    setAttachedFiles(prev => [...prev, fileUrl]);
+  };
+
+  const handleFileUploadError = (error: string) => {
+    console.error('File upload error:', error);
+    // You could show a toast notification here
   };
 
   const handleTextareaKeyPress = (e: React.KeyboardEvent) => {
@@ -203,12 +219,12 @@ export default function AgentChatPage() {
                 {/* Siri-style Voice Interface with depth */}
                 <div className="relative">
                   {/* Outer glow rings */}
-                  <div className={`absolute inset-0 w-20 h-20 rounded-full transition-all duration-500 ${
+                  <div className={`absolute inset-0 w-14 h-14 rounded-full transition-all duration-500 ${
                     isListening 
                       ? 'bg-gradient-to-r from-purple-400/40 to-blue-400/40 animate-ping scale-110' 
                       : 'bg-gradient-to-r from-blue-400/20 to-purple-400/20 scale-100'
                   }`}></div>
-                  <div className={`absolute inset-0 w-20 h-20 rounded-full transition-all duration-300 ${
+                  <div className={`absolute inset-0 w-14 h-14 rounded-full transition-all duration-300 ${
                     isListening 
                       ? 'bg-gradient-to-r from-purple-300/30 to-blue-300/30 animate-pulse scale-105' 
                       : 'bg-gradient-to-r from-blue-300/15 to-purple-300/15'
@@ -216,7 +232,7 @@ export default function AgentChatPage() {
                   
                   <button
                     onClick={toggleListening}
-                    className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl ${
+                    className={`relative w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl ${
                       isListening 
                         ? 'bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-600 shadow-purple-500/50' 
                         : 'bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 hover:from-blue-600 hover:via-purple-700 hover:to-indigo-800 shadow-blue-500/30'
@@ -258,13 +274,17 @@ export default function AgentChatPage() {
                 </button>
               </div>
               
-              <div className="text-center mt-6">
+              <div className="text-center mt-2">
                 <p className="text-gray-500 text-sm font-medium">Speak your answers</p>
               </div>
 
               {/* Text Input Area */}
               <div className="mt-4">
                 <div className="flex items-center space-x-3 bg-white rounded-full border border-gray-200 px-4 py-2 shadow-sm">
+                  <FileUpload 
+                    onFileUploaded={handleFileUploaded}
+                    onError={handleFileUploadError}
+                  />
                   <input
                     type="text"
                     value={inputText}
@@ -282,6 +302,13 @@ export default function AgentChatPage() {
                     </svg>
                   </button>
                 </div>
+                
+                {/* Show attached files count */}
+                {attachedFiles.length > 0 && (
+                  <div className="mt-2 text-xs text-gray-500">
+                    {attachedFiles.length} file(s) attached
+                  </div>
+                )}
               </div>
             </div>
             </div>
