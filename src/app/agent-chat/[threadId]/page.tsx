@@ -6,6 +6,7 @@ import { useAgentChat } from '@/hooks/useAgentChat';
 import FileUpload from '@/components/FileUpload';
 import RightPanel from '@/components/RightPanel';
 import { speechRecognitionService } from '@/service/speechRecognition';
+import { processBotMessageHTML } from '@/common/utils';
 
 
 
@@ -186,10 +187,12 @@ export default function AgentChatPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col relative">
+      {/* Background Overlay */}
+
       {/* Main Content */}
-      <div className="flex-1 flex max-w-7xl mx-auto w-full">
-        <div className="flex-1 px-4 my-4">
+      <div className="flex-1 flex max-w-7xl mx-auto w-full z-10">
+        <div className="flex-1 my-4">
           <div 
             className="p-1 rounded-[30px] h-[calc(100vh-42px)]"
             style={{
@@ -246,10 +249,15 @@ export default function AgentChatPage() {
               {messages.map((message, index) => (
                 <div key={`message-${message.id}-${index}`} className={`flex ${message.isBot ? 'justify-start' : 'justify-end'}`}>
                   {message.isBot ? (
-                    <div className="bg-white rounded-2xl px-4 py-3 max-w-sm shadow-sm border border-gray-100">
-                      <p className="text-gray-800 text-sm leading-relaxed">
-                        {message.text}
-                      </p>
+                    <div className="bg-white rounded-2xl px-4 py-3 max-w-md shadow-sm border border-gray-100">
+                      <div 
+                        className="text-gray-800 text-sm bot-message-content"
+                        dangerouslySetInnerHTML={{__html: processBotMessageHTML(message.text)}}
+                        style={{
+                          wordBreak: 'break-word',
+                          overflowWrap: 'break-word'
+                        }}
+                      />
                     </div>
                   ) : (
                     <div className="bg-blue-500 text-white rounded-2xl px-4 py-3 max-w-sm shadow-sm">
@@ -264,11 +272,15 @@ export default function AgentChatPage() {
               {/* Show streaming message in real-time - always at the end */}
               {isStreaming && currentStreamingMessage && (
                 <div key="streaming-message" className="flex justify-start">
-                  <div className="bg-white rounded-2xl px-4 py-3 max-w-sm shadow-sm border border-gray-100 bg-opacity-90">
-                    <p className="text-gray-800 text-sm leading-relaxed">
-                      {currentStreamingMessage}
-                      <span className="animate-pulse text-blue-500">|</span>
-                    </p>
+                  <div className="bg-white rounded-2xl px-4 py-3 max-w-md shadow-sm border border-gray-100 bg-opacity-90">
+                    <div 
+                      className="text-gray-800 text-sm bot-message-content"
+                      dangerouslySetInnerHTML={{__html: processBotMessageHTML(currentStreamingMessage)}}
+                      style={{
+                        wordBreak: 'break-word',
+                        overflowWrap: 'break-word'
+                      }}
+                    />
                   </div>
                 </div>
               )}

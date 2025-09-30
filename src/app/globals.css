@@ -24,3 +24,102 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Bot message HTML content styling */
+.bot-message-content {
+  line-height: 1.6;
+}
+
+.bot-message-content strong {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.bot-message-content em {
+  font-style: italic;
+}
+
+.bot-message-content ul {
+  list-style-type: disc;
+  margin-left: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.bot-message-content ol {
+  list-style-type: decimal;
+  margin-left: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.bot-message-content li {
+  margin-bottom: 0.25rem;
+}
+
+.bot-message-content p {
+  margin-bottom: 0.5rem;
+}
+
+.bot-message-content p:last-child {
+  margin-bottom: 0;
+}
+
+.bot-message-content br {
+  line-height: 1.2;
+}
+
+.bot-message-content h1,
+.bot-message-content h2,
+.bot-message-content h3,
+.bot-message-content h4,
+.bot-message-content h5,
+.bot-message-content h6 {
+  font-weight: 600;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+.bot-message-content h1 { font-size: 1.25rem; }
+.bot-message-content h2 { font-size: 1.125rem; }
+.bot-message-content h3 { font-size: 1rem; }
+
+.bot-message-content code {
+  background-color: #f3f4f6;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+}
+
+.bot-message-content pre {
+  background-color: #f3f4f6;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+
+.bot-message-content blockquote {
+  border-left: 4px solid #d1d5db;
+  padding-left: 1rem;
+  margin: 0.5rem 0;
+  font-style: italic;
+  color: #6b7280;
+}
+
+.bot-message-content .masked-mobile {
+  /* background-color: #fef3c7;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  color: #92400e;
+  border: 2px solid #f59e0b;
+  display: inline-block;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin: 0 0.125rem; */
+}

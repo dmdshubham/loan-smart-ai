@@ -43,8 +43,19 @@ export default function ChatPage() {
   }, [currentScreen]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <img src="/icons/logo.svg" alt="Qualtech Logo" className="w-[120px] h-[40px] absolute top-4 left-10" />
+    <div className="h-screen bg-gray-50 flex flex-col relative">
+      {/* Background Overlay */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: 'url(/images/home/bg2.png)',
+          zIndex:0
+        }}
+      />
+      
+      {/* Content with higher z-index */}
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <img src="/icons/logo.svg" alt="Qualtech Logo" className="w-[120px] h-[40px] absolute top-4 left-10" />
       <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-8">
         <div 
           className="p-1 rounded-[30px]"
@@ -54,6 +65,13 @@ export default function ChatPage() {
           }}
         >
           <div className="bg-white h-[600px] flex flex-col relative overflow-hidden rounded-[26px]">
+          <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: 'url(/images/home/bg1.png)',
+          zIndex:0
+        }}
+      />
           
           {/* Brand Header */}
           <div className="text-center py-8 bg-gradient-to-b from-blue-50 to-white">
@@ -65,7 +83,7 @@ export default function ChatPage() {
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 px-8 py-4 overflow-y-auto">
+          <div className="flex-1 px-8 py-4 overflow-y-auto z-10">
             {currentScreen === 'welcome' && (
               <div className="mb-6">
                 <div className="text-center">
@@ -82,7 +100,7 @@ export default function ChatPage() {
               <div className="mb-6">
                 <div className="text-center">
                   <div className="inline-block bg-gray-100 rounded-2xl px-6 py-4 max-w-lg">
-                    <p className="text-gray-800 text-lg leading-relaxed whitespace-pre-line">
+                    <p className="text-gray-800 text-lg whitespace-pre-line text-left">
                       Please keep these documents ready with you to complete the application process:{'\n\n'}
                       • Aadhar Card{'\n'}
                       • Pan Card{'\n'}
@@ -96,7 +114,7 @@ export default function ChatPage() {
           </div>
 
           {/* Voice Interface */}
-          <div className="flex justify-center py-6">
+          <div className="flex justify-center py-6 z-10">
             <button
               onClick={toggleListening}
               className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 ${
@@ -120,11 +138,12 @@ export default function ChatPage() {
             </button>
           </div>
 
-          <div className="text-center pb-6">
+          <div className="text-center pb-6 z-10">
             <p className="text-gray-500 text-sm">Speak your answers</p>
           </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

@@ -1,5 +1,24 @@
 import { io, Socket } from 'socket.io-client';
 
+export interface FieldItem {
+  lable: string;
+  key: string;
+  value: any;
+  isVerified?: boolean;
+}
+
+export interface ApplicantDetails {
+  personalDetails?: FieldItem[];
+  demographics?: FieldItem[];
+  loanDetails?: FieldItem[];
+  employmentDetails?: FieldItem[];
+  bankDetails?: FieldItem[];
+  documents?: FieldItem[];
+  propertyDetails?: FieldItem[];
+  otherLoanDetails?: FieldItem[];
+  addressDetails?: FieldItem[];
+}
+
 export interface ConversationVariable {
   conversation_id: string;
   variable_name: string;
@@ -10,6 +29,12 @@ export interface ConversationVariable {
   updated_at: {
     $date: string;
   };
+}
+
+export interface ApplicantData {
+  conversation_id: string;
+  applicantDetails: ApplicantDetails;
+  timestamp: string;
 }
 
 export interface SocketResponse {
@@ -29,6 +54,7 @@ export interface SocketEventResponse {
 
 export interface SocketServiceCallbacks {
   onVariablesUpdate?: (variables: ConversationVariable[]) => void;
+  onApplicantDataUpdate?: (data: ApplicantData) => void;
   onError?: (error: any) => void;
   onConnect?: () => void;
   onDisconnect?: () => void;
@@ -59,15 +85,33 @@ class SocketService {
       this.callbacks.onDisconnect?.();
     });
 
-    this.socket.on('session_variables_updated', (response: SocketEventResponse) => {
+    this.socket.on('session_variables_updated', (response: any) => {
       console.log('Received session variables update:', response);
-      this.handleVariablesUpdate(response);
+      
+      // Check if this is the new applicant details structure
+      if (response.data?.applicantDetails) {
+        this.handleApplicantDataUpdate(response);
+      } else if (Array.isArray(response.data)) {
+        // Old structure - handle as before
+        this.handleVariablesUpdate(response as SocketEventResponse);
+      }
     });
 
     this.socket.on('error', (error: any) => {
       console.error('Socket error:', error);
       this.callbacks.onError?.(error);
     });
+  }
+
+  private handleApplicantDataUpdate(response: any) {
+    const applicantData: ApplicantData = {
+      conversation_id: response.conversation_id,
+      applicantDetails: response.data.applicantDetails,
+      timestamp: response.timestamp
+    };
+    
+    console.log('Parsed applicant data:', applicantData);
+    this.callbacks.onApplicantDataUpdate?.(applicantData);
   }
 
   private handleVariablesUpdate(response: SocketEventResponse) {
