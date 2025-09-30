@@ -18,6 +18,7 @@ export default function AgentChatPage() {
   const [attachedFiles, setAttachedFiles] = useState<string[]>([]);
   const [speechText, setSpeechText] = useState('');
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
+  const [userPhoto, setUserPhoto] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -31,6 +32,14 @@ export default function AgentChatPage() {
     sendMessage,
   } = useAgentChat(initialThreadId);
   
+
+  // Load user photo from localStorage
+  useEffect(() => {
+    const storedPhoto = localStorage.getItem('userPhoto');
+    if (storedPhoto) {
+      setUserPhoto(storedPhoto);
+    }
+  }, []);
 
   // Auto-scroll to bottom when messages change or streaming updates
   useEffect(() => {
@@ -234,12 +243,20 @@ export default function AgentChatPage() {
                 </div>
                   {/* User profile */}
                   <div className="flex items-center space-x-2">
-                    <img 
-                      src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face&auto=format" 
-                      alt="Rohan" 
-                      className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm"
-                    />
-                    <span className="text-sm font-semibold text-gray-800">Rohan</span>
+                    {userPhoto ? (
+                      <img 
+                        src={userPhoto} 
+                        alt="User" 
+                        className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                      />
+                    ) : (
+                      <img 
+                        src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face&auto=format" 
+                        alt="User" 
+                        className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                      />
+                    )}
+                    <span className="text-sm font-semibold text-gray-800">User</span>
                   </div>
                 </div>
               </div>
