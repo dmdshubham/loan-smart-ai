@@ -71,7 +71,7 @@ class SocketService {
   }
 
   private connect() {
-    this.socket = io('http://144.24.127.147:3000', {
+    this.socket = io(process.env.NEXT_PUBLIC_SOCKET_BASE_URL, {
       transports: ['websocket', 'polling']
     });
 

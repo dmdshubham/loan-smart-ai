@@ -11,9 +11,7 @@ export interface StreamRequest {
 
 export function getApiBaseUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-  return (envUrl && envUrl.trim().length > 0)
-    ? envUrl
-    : 'http://65.1.215.128:8002';
+  return envUrl;
 }
 
 /**
