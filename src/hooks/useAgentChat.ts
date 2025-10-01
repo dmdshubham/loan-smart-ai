@@ -167,25 +167,12 @@ export function useAgentChat(initialThreadId: string): UseAgentChatReturn {
     setMessages(prev => [...prev, { id: Date.now(), text: messageText, isBot: false, timestamp: new Date() }]);
 
     try {
-      // Prepare content array
-      const content: Array<{ type: 'text' | 'image_url'; text?: string; image_url?: { url: string } }> = [];
-      
-      // Add text content if available
-      if (trimmed) {
-        content.push({ type: 'text', text: trimmed });
-      }
-      
-      // Add file URLs as image_url content (assuming they're images for now)
-      fileUrls.forEach(url => {
-        content.push({ type: 'image_url', image_url: { url } });
-      });
-
       const response = await startLoanAgentStream({
         threadId: actualThreadId,
         input: {
           messages: [{
             role: 'user',
-            content
+            content: trimmed ? [{ type: 'text', text: trimmed }] : []
           }]
         }
       });

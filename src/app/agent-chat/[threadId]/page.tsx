@@ -5,8 +5,10 @@ import { useParams } from 'next/navigation';
 import { useAgentChat } from '@/hooks/useAgentChat';
 import FileUpload from '@/components/FileUpload';
 import RightPanel from '@/components/RightPanel';
+import DocumentUploadInline from '@/components/DocumentUploadInline';
 import { speechRecognitionService } from '@/service/speechRecognition';
 import { processBotMessageHTML } from '@/common/utils';
+import { parseDocumentUrls, formatDocumentType, detectDocumentUploadRequest, formatApiMessage } from '@/utils/document-detector';
 
 
 
@@ -20,6 +22,7 @@ export default function AgentChatPage() {
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isUploadingDoc, setIsUploadingDoc] = useState(false);
 
   const {
     actualThreadId,
@@ -140,6 +143,31 @@ export default function AgentChatPage() {
     // You could show a toast notification here
   };
 
+  const handleDocumentUpload = async (fileUrls: string[], documentType: string) => {
+    setIsUploadingDoc(true);
+    try {
+      // Format the message according to API requirements
+      // Convert snake_case document type
+      const docTypeLower = documentType.toLowerCase().replace(/\s+/g, '_');
+      
+      let formattedMessage: string;
+      if (fileUrls.length === 1) {
+        // Single file: document_type_url='url'
+        formattedMessage = `${docTypeLower}_url='${fileUrls[0]}'`;
+      } else {
+        // Multiple files: document_type_urls="url1", "url2", "url3"
+        formattedMessage = `${docTypeLower}_urls="${fileUrls.join('", "')}"`;
+      }
+      
+      // Send the formatted message to the API
+      await sendMessage(formattedMessage, []);
+    } catch (error) {
+      console.error('Error sending document upload message:', error);
+    } finally {
+      setIsUploadingDoc(false);
+    }
+  };
+
   const handleTextareaKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -161,6 +189,67 @@ export default function AgentChatPage() {
       setSpeechText('');
       speechRecognitionService.startListening();
     }
+  };
+
+  // Render document URLs component with field labels
+  const renderDocumentUrls = (parsedData: ReturnType<typeof parseDocumentUrls>) => {
+    const { urls, documentType, fields } = parsedData;
+    
+    if (!documentType || urls.length === 0) return null;
+    
+    return (
+      <div className="mt-2 space-y-2">
+        <p className="text-xs text-gray-600 font-medium">
+          📎 {formatDocumentType(documentType)} {urls.length > 1 ? `(${urls.length} files)` : ''}
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {fields.map((field, index) => {
+            const isPdf = field.url.toLowerCase().endsWith('.pdf');
+            
+            // Extract label from field name (e.g., "front" from "aadhaar_card_front_url")
+            const labelMatch = field.fieldName.match(/_(front|back)_url/i);
+            const label = labelMatch ? labelMatch[1].charAt(0).toUpperCase() + labelMatch[1].slice(1) : `${index + 1}`;
+            
+            return (
+              <a
+                key={index}
+                href={field.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative group"
+              >
+                {isPdf ? (
+                  <div className="h-20 bg-red-50 border border-red-200 rounded-lg flex items-center justify-center hover:bg-red-100 transition-colors">
+                    <div className="text-center">
+                      <svg className="w-8 h-8 mx-auto text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18.5,9H13V3.5L18.5,9M6,20V4H12V10H18V20H6Z" />
+                      </svg>
+                      <p className="text-xs text-red-600 mt-1">PDF</p>
+                    </div>
+                  </div>
+                ) : (
+                  <img 
+                    src={field.url} 
+                    alt={`${label}`}
+                    className="w-full h-20 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition-opacity"
+                  />
+                )}
+                {/* Label badge */}
+                <div className="absolute top-1 left-1 bg-black bg-opacity-60 text-white text-xs px-2 py-0.5 rounded">
+                  {label}
+                </div>
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z" />
+                  </svg>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -263,44 +352,84 @@ export default function AgentChatPage() {
             
             {/* Messages Area */}
             <div className="relative flex-1 px-6 py-6 overflow-y-auto space-y-4">
-              {messages.map((message, index) => (
-                <div key={`message-${message.id}-${index}`} className={`flex ${message.isBot ? 'justify-start' : 'justify-end'}`}>
-                  {message.isBot ? (
-                    <div className="bg-white rounded-2xl px-4 py-3 max-w-md shadow-sm border border-gray-100">
-                      <div 
-                        className="text-gray-800 text-sm bot-message-content"
-                        dangerouslySetInnerHTML={{__html: processBotMessageHTML(message.text)}}
-                        style={{
-                          wordBreak: 'break-word',
-                          overflowWrap: 'break-word'
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="bg-blue-500 text-white rounded-2xl px-4 py-3 max-w-sm shadow-sm">
-                      <p className="text-sm leading-relaxed">
-                        {message.text}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ))}
+              {messages.map((message, index) => {
+                // Parse document URLs from message text
+                const parsedUrls = parseDocumentUrls(message.text);
+                const hasDocumentUrls = parsedUrls.documentType !== null && parsedUrls.urls.length > 0;
+                
+                // Detect document upload request for bot messages
+                const uploadRequest = message.isBot ? detectDocumentUploadRequest(message.text) : null;
+                const showUploadUI = uploadRequest?.isUploadRequest && !hasDocumentUrls && index === messages.length - 1;
+
+                return (
+                  <div key={`message-${message.id}-${index}`} className={`flex ${message.isBot ? 'justify-start' : 'justify-end'}`}>
+                    {message.isBot ? (
+                      <div className="bg-white rounded-2xl px-4 py-3 max-w-md shadow-sm border border-gray-100">
+                        {!hasDocumentUrls && (
+                          <div 
+                            className="text-gray-800 text-sm bot-message-content"
+                            dangerouslySetInnerHTML={{__html: processBotMessageHTML(message.text)}}
+                            style={{
+                              wordBreak: 'break-word',
+                              overflowWrap: 'break-word'
+                            }}
+                          />
+                        )}
+                        {hasDocumentUrls && renderDocumentUrls(parsedUrls)}
+                        {showUploadUI && uploadRequest && (
+                          <DocumentUploadInline
+                            documentType={uploadRequest.documentType}
+                            maxFiles={5}
+                            onUpload={handleDocumentUpload}
+                            isUploading={isUploadingDoc}
+                          />
+                        )}
+                      </div>
+                    ) : (
+                      <div className="bg-blue-500 text-white rounded-2xl px-4 py-3 max-w-sm shadow-sm">
+                        {hasDocumentUrls ? (
+                          <>
+                            <p className="text-sm leading-relaxed mb-2">
+                              Uploaded {formatDocumentType(parsedUrls.documentType!)}
+                            </p>
+                            <div className="bg-blue-400 bg-opacity-50 rounded-lg p-2">
+                              {renderDocumentUrls(parsedUrls)}
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-sm leading-relaxed">
+                            {message.text}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
               
               {/* Show streaming message in real-time - always at the end */}
-              {isStreaming && currentStreamingMessage && (
-                <div key="streaming-message" className="flex justify-start">
-                  <div className="bg-white rounded-2xl px-4 py-3 max-w-md shadow-sm border border-gray-100 bg-opacity-90">
-                    <div 
-                      className="text-gray-800 text-sm bot-message-content"
-                      dangerouslySetInnerHTML={{__html: processBotMessageHTML(currentStreamingMessage)}}
-                      style={{
-                        wordBreak: 'break-word',
-                        overflowWrap: 'break-word'
-                      }}
-                    />
+              {isStreaming && currentStreamingMessage && (() => {
+                const parsedUrls = parseDocumentUrls(currentStreamingMessage);
+                const hasDocumentUrls = parsedUrls.documentType !== null && parsedUrls.urls.length > 0;
+                
+                return (
+                  <div key="streaming-message" className="flex justify-start">
+                    <div className="bg-white rounded-2xl px-4 py-3 max-w-md shadow-sm border border-gray-100 bg-opacity-90">
+                      {!hasDocumentUrls && (
+                        <div 
+                          className="text-gray-800 text-sm bot-message-content"
+                          dangerouslySetInnerHTML={{__html: processBotMessageHTML(currentStreamingMessage)}}
+                          style={{
+                            wordBreak: 'break-word',
+                            overflowWrap: 'break-word'
+                          }}
+                        />
+                      )}
+                      {hasDocumentUrls && renderDocumentUrls(parsedUrls)}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
               {/* Thinking indicator */}
               {!isStreaming && isThinking && (
                 <div key="thinking" className="flex justify-start">
@@ -404,10 +533,10 @@ export default function AgentChatPage() {
               {/* Text Input Area */}
               <div className="mt-4">
                 <div className="flex items-center space-x-3 bg-white rounded-full border border-gray-200 px-4 py-2 shadow-sm">
-                  <FileUpload 
+                  {/* <FileUpload 
                     onFileUploaded={handleFileUploaded}
                     onError={handleFileUploadError}
-                  />
+                  /> */}
                   <input
                     type="text"
                     value={inputText}
