@@ -11,7 +11,7 @@ export interface StreamRequest {
 
 export function getApiBaseUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-  return envUrl;
+  return envUrl || '';
 }
 
 /**
