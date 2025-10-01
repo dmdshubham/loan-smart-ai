@@ -15,8 +15,8 @@ interface PresignedUrlResponse {
   }
 }
 
-const PRESIGNED_URL_ENDPOINT = 'http://144.24.127.147:3000/api/v1/presigned-url'
-
+const PRESIGNED_URL_ENDPOINT = `${process.env.NEXT_PUBLIC_UPLOAD_FILE_BASE_URL}/api/v1/presigned-url`
+  
 export class UploadService {
   /**
    * Get presigned URL for file upload
