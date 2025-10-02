@@ -71,11 +71,23 @@ export default function ChatPage() {
 
           {/* Messages Area */}
           <div className="flex-1 px-8 py-4 overflow-y-auto z-10">
-            <div className="mb-6">
-              <div className="text-center">
-                <div className="inline-block bg-gray-100 rounded-2xl px-6 py-4 max-w-md">
-                  <p className="text-gray-800 text-lg leading-relaxed whitespace-pre-line">
-                    Hi. Welcome.{'\n'}Shall we start with the loan application process?
+            <div className="mb-6 flex items-center">
+              <div className=" items-center gap-2 w-[20%]">
+                <img src="/images/freda.png" alt="Frida" className="w-[150px] h-[150px]" />
+                <p className="text-gray-800 text-lg text-center leading-relaxed">
+                Frida
+                </p>
+                <p className="text-gray-800  text-center font-italic  text-sm leading-relaxed">
+                AI-Enabled Credit Assistant
+                </p>
+              </div>
+              <div className="w-[80%]">
+                <div className="rounded-2xl px-6 py-4">
+                  <p className="text-gray-800 text-xl font-extrabold  ">
+                  Welcome to Q-Fin Services! Let’s kickstart your loan
+                  application with Frida, our AI-powered digital loan
+                  assistant, and experience a swift and effortless process
+                  built to accelerate your business ambitions.
                   </p>
                 </div>
               </div>

@@ -636,7 +636,7 @@ export default function AgentChatPage() {
         </div>
 
         {/* Right Panel - Hide on mobile, show on tablet and desktop */}
-        <div className="hidden md:block">
+        <div className="hidden sm:block">
           <RightPanel ref={rightPanelRef} conversationId={actualThreadId} />
         </div>
 
