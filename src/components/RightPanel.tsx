@@ -1,12 +1,17 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react'
 import { ApplicantData, Step } from './type';
 import { socketService, ConversationVariable, ApplicantData as SocketApplicantData, FieldItem } from '@/service/socket';
+import { openLinkInNewTab } from '@/common/utils';
 
 interface RightPanelProps {
   conversationId?: string;
 }
 
-const RightPanel: React.FC<RightPanelProps> = ({ conversationId }) => {
+export interface RightPanelRef {
+  resetExpandedSections: () => void;
+}
+
+const RightPanel = forwardRef<RightPanelRef, RightPanelProps>(({ conversationId }, ref) => {
   const [conversationVariables, setConversationVariables] = useState<ConversationVariable[]>([]);
   const [applicantData, setApplicantData] = useState<SocketApplicantData | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
@@ -21,14 +26,14 @@ const RightPanel: React.FC<RightPanelProps> = ({ conversationId }) => {
         console.log('Applicant data updated:', data);
         
         // Get the section names from the new data
-        const newSectionNames = Object.keys(data.applicantDetails || {});
+        const newSectionNames = Object.keys(data.applicant_details || {});
         console.log('New section names:', newSectionNames);
         
         // Detect field value changes and new sections
         setApplicantData((prevData) => {
           if (prevData) {
             console.log('Previous data exists, checking for changes...');
-            const prevSectionNames = new Set(Object.keys(prevData.applicantDetails || {}));
+            const prevSectionNames = new Set(Object.keys(prevData.applicant_details || {}));
             console.log('Previous section names:', Array.from(prevSectionNames));
             
             const newSections = newSectionNames.filter(name => !prevSectionNames.has(name));
@@ -37,10 +42,53 @@ const RightPanel: React.FC<RightPanelProps> = ({ conversationId }) => {
             const updatedSections = new Set<string>();
             const updatedFields = new Set<string>();
             
+            // Helper function to deep compare values
+            const deepCompareValues = (val1: any, val2: any): boolean => {
+              // Handle exact equality (including null === null, undefined === undefined)
+              if (val1 === val2) return true;
+              
+              // Handle null/undefined cases where they're not equal
+              if (val1 == null || val2 == null) return false;
+              
+              // Handle different types
+              if (typeof val1 !== typeof val2) return false;
+              
+              // Handle arrays (for documents section)
+              if (Array.isArray(val1) && Array.isArray(val2)) {
+                if (val1.length !== val2.length) return false;
+                
+                for (let i = 0; i < val1.length; i++) {
+                  const item1 = val1[i];
+                  const item2 = val2[i];
+                  
+                  // Handle nested objects with {value, isVerified}
+                  if (typeof item1 === 'object' && item1 !== null && typeof item2 === 'object' && item2 !== null) {
+                    // Deep compare the object properties
+                    if (!deepCompareValues(item1, item2)) {
+                      return false;
+                    }
+                  } else if (item1 !== item2) {
+                    return false;
+                  }
+                }
+                return true;
+              }
+              
+              // Handle objects with {value, isVerified}
+              if (typeof val1 === 'object' && typeof val2 === 'object') {
+                if ('value' in val1 && 'value' in val2) {
+                  return val1.value === val2.value && val1.isVerified === val2.isVerified;
+                }
+                return JSON.stringify(val1) === JSON.stringify(val2);
+              }
+              
+              return val1 === val2;
+            };
+
             // Check for field value changes in existing sections
             newSectionNames.forEach(sectionName => {
-              const currentFields = (data.applicantDetails as any)?.[sectionName] || [];
-              const prevFields = (prevData.applicantDetails as any)?.[sectionName] || [];
+              const currentFields = (data.applicant_details as any)?.[sectionName] || [];
+              const prevFields = (prevData.applicant_details as any)?.[sectionName] || [];
               
               console.log(`Checking section: ${sectionName}`);
               console.log('Current fields:', currentFields);
@@ -52,16 +100,19 @@ const RightPanel: React.FC<RightPanelProps> = ({ conversationId }) => {
                 
                 // Field is new (not in previous data)
                 if (!prevField) {
-                  console.log(`New field detected: ${currentField.key} with value "${currentField.value}"`);
+                  console.log(`New field detected: ${currentField.key} with value`, currentField.value);
                   const fieldId = `${sectionName}.${currentField.key}`;
                   updatedFields.add(fieldId);
                   return true;
                 }
                 
-                // Field value has changed
-                const hasChanged = prevField.value !== currentField.value;
+                // Field value has changed - use deep comparison
+                const hasChanged = !deepCompareValues(prevField.value, currentField.value);
                 if (hasChanged) {
-                  console.log(`Field ${currentField.key} changed from "${prevField.value}" to "${currentField.value}"`);
+                  console.log(`Field ${currentField.key} changed:`, {
+                    from: prevField.value,
+                    to: currentField.value
+                  });
                   const fieldId = `${sectionName}.${currentField.key}`;
                   updatedFields.add(fieldId);
                 }
@@ -225,6 +276,15 @@ const RightPanel: React.FC<RightPanelProps> = ({ conversationId }) => {
     };
   }, [conversationId]);
 
+  const resetExpandedSections = () => {
+    setExpandedSections(new Set([]));
+  }
+
+  // Expose resetExpandedSections to parent component via ref
+  useImperativeHandle(ref, () => ({
+    resetExpandedSections
+  }));
+
   const toggleSection = (sectionName: string) => {
     setExpandedSections(prev => {
       const newSet = new Set(prev);
@@ -245,19 +305,40 @@ const RightPanel: React.FC<RightPanelProps> = ({ conversationId }) => {
   };
 
   const formatValue = (value: any): string => {
+    if (value === null || value === undefined) {
+      return '-';
+    }
     if (typeof value === 'boolean') {
       return value ? 'Yes' : 'No';
     }
     if (typeof value === 'number') {
       return value.toLocaleString();
     }
+    if (typeof value === 'object') {
+      // Handle nested object structure like {value: "actual value", isVerified: true}
+      if ('value' in value) {
+        return formatValue(value.value);
+      }
+      // Fallback to JSON representation for other objects
+      return JSON.stringify(value);
+    }
     return String(value);
   };
 
   const getStatusIcon = (value: any, isVerified?: boolean) => {
+    // Extract actual value if it's a nested object
+    let actualValue = value;
+    if (typeof value === 'object' && value !== null && 'value' in value) {
+      actualValue = value.value;
+    }
+    
     // Show verification status if isVerified is defined
-    if (isVerified !== undefined) {
-      return isVerified ? (
+    const verificationStatus = typeof value === 'object' && value !== null && 'isVerified' in value 
+      ? value.isVerified 
+      : isVerified;
+      
+    if (verificationStatus !== undefined) {
+      return verificationStatus ? (
         <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow-sm">
           <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -271,8 +352,8 @@ const RightPanel: React.FC<RightPanelProps> = ({ conversationId }) => {
     }
     
     // Show status based on value if no verification status
-    if (typeof value === 'boolean') {
-      return value ? (
+    if (typeof actualValue === 'boolean') {
+      return actualValue ? (
         <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow-sm">
           <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -286,7 +367,7 @@ const RightPanel: React.FC<RightPanelProps> = ({ conversationId }) => {
     }
     
     // Show blue checkmark for non-empty values
-    if (value && value !== '') {
+    if (actualValue && actualValue !== '') {
       return (
         <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center shadow-sm">
           <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -300,6 +381,137 @@ const RightPanel: React.FC<RightPanelProps> = ({ conversationId }) => {
     return (
       <div className="w-5 h-5 bg-gray-300 rounded-full flex items-center justify-center shadow-sm">
         <span className="text-white text-xs font-bold">-</span>
+      </div>
+    );
+  };
+
+  // Special rendering for documents section with nested file arrays
+  const renderDocumentsSection = (sectionKey: string, fields: FieldItem[]) => {
+    if (!fields || fields.length === 0) return null;
+
+    return (
+      <div 
+        key={sectionKey} 
+        className={`border-b-1  border-b-[#0000001A] m-0 p-0 transition-all duration-500 ${
+          highlightedSections.has(sectionKey) ? 'bg-blue-50 shadow-md' : ''
+        }`}
+      >
+        <button 
+          onClick={() => toggleSection(sectionKey)}
+          className={`w-full px-2 py-2.5 flex cursor-pointer items-center justify-between text-left transition-all duration-300 ${
+            highlightedSections.has(sectionKey) 
+              ? 'gradient-wave bg-blue-100 border-l-4 border-blue-500 shadow-lg animate-pulse' 
+              : 'hover:bg-gray-200'
+          }`}
+        >
+          <span className="font-semibold text-sm text-black">{formatVariableName(sectionKey)}</span>
+          <svg 
+            className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${expandedSections.has(sectionKey) ? 'rotate-180' : ''}`} 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        <div 
+          className={`overflow-hidden  transition-all duration-500 ease-in-out ${
+            expandedSections.has(sectionKey) 
+              ? 'max-h-[3000px] opacity-100' 
+              : 'max-h-0 opacity-0'
+          }`}
+        >
+          <div className="px-2 pb-5 space-y-4 ">
+            {fields.map((field) => {
+              // Each field is a document type (Pay Slips, Bank Statement, etc.)
+              const documentType = field.key;
+              const documentFiles = Array.isArray(field.value) ? field.value : [];
+              const fileCount = documentFiles.length;
+
+              return (
+                <div key={field.key} className="space-y-2">
+                  {/* Document Type Header */}
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-semibold text-gray-800">{field.lable || documentType}</h4>
+                    <span className="text-xs text-gray-600">{fileCount} {fileCount === 1 ? 'File' : 'Files'}</span>
+                  </div>
+                  
+                  {/* Files Grid */}
+                  <div className="flex gap-2 overflow-x-auto pb-6">
+                    {documentFiles.map((fileItem: any, fileIndex: number) => {
+                      const fileUrl = typeof fileItem === 'object' ? fileItem.value : fileItem;
+                      const isVerified = typeof fileItem === 'object' ? fileItem.isVerified : false;
+                      const isPdf = fileUrl && typeof fileUrl === 'string' && fileUrl.toLowerCase().endsWith('.pdf');
+                      
+                      return (
+                        <div key={fileIndex} className="relative flex-shrink-0 w-[81px] h-[102px]">
+                          <div
+                            onClick={() => fileUrl && openLinkInNewTab(fileUrl)}
+                            className="block w-full h-full relative group cursor-pointer"
+                          >
+                            {/* File Preview */}
+                            <div className="w-full h-full bg-gray-100 rounded-lg border border-gray-200 overflow-hidden">
+                              {fileUrl && !isPdf ? (
+                                <img 
+                                  src={fileUrl} 
+                                  alt={`${documentType} ${fileIndex + 1}`}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                    (e.target as HTMLImageElement).parentElement!.innerHTML = `
+                                      <div class="w-full h-full flex items-center justify-center bg-gray-100">
+                                        <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                                          <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
+                                        </svg>
+                                      </div>
+                                    `;
+                                  }}
+                                />
+                              ) : isPdf ? (
+                                <div className="w-full h-full flex flex-col items-center justify-center bg-red-50">
+                                  <svg className="w-10 h-10 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18.5,9H13V3.5L18.5,9M6,20V4H12V10H18V20H6Z" />
+                                  </svg>
+                                  <span className="text-xs text-red-600 mt-1">PDF</span>
+                                </div>
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                                  <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Verification Badge */}
+                            <div className="absolute top-1 right-1">
+                              {isVerified ? (
+                                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-md">
+                                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              ) : (
+                                <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-md">
+                                  <span className="text-white text-xs font-bold">!</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* File Label */}
+                          <p className="text-xs text-gray-600 mt-1 text-center truncate">
+                            {documentType} {fileIndex + 1}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     );
   };
@@ -355,7 +567,7 @@ const RightPanel: React.FC<RightPanelProps> = ({ conversationId }) => {
                   <span className="text-xs font-normal text-black">{field.lable}</span>
                   <div className="flex items-center space-x-3">
                     <span className="text-sm font-semibold text-gray-900">
-                      {field.value || '-'}
+                      {formatValue(field.value)}
                     </span>
                     <div className="flex items-center space-x-1">
                       {getStatusIcon(field.value, field.isVerified)}
@@ -474,43 +686,10 @@ const RightPanel: React.FC<RightPanelProps> = ({ conversationId }) => {
       <div className="w-96    h-screen overflow-scroll ">
     <div className="p-6">
       {/* Applicant Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-black text-gray-900">Applicant Details</h2>
         <div className="flex items-center space-x-2">
-          <button 
-            onClick={() => {
-              console.log('Manual test - expanding all sections and animating fields');
-              const allSections = Object.keys(applicantData?.applicantDetails || {});
-              console.log('All sections:', allSections);
-              
-              // Test section highlighting
-              setExpandedSections(new Set(allSections));
-              setHighlightedSections(new Set(allSections));
-              
-              // Test field animations - animate first field of each section
-              const testFields = new Set<string>();
-              allSections.forEach(sectionName => {
-                const fields = (applicantData?.applicantDetails as any)?.[sectionName] || [];
-                if (fields.length > 0) {
-                  const fieldId = `${sectionName}.${fields[0].key}`;
-                  testFields.add(fieldId);
-                }
-              });
-              
-              console.log('Testing field animations:', Array.from(testFields));
-              setAnimatedFields(testFields);
-              
-              // Clear animations
-              setTimeout(() => {
-                console.log('Clearing highlighted sections and field animations');
-                setHighlightedSections(new Set());
-                setAnimatedFields(new Set());
-              }, 4000);
-            }}
-            className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
-          >
-            Test
-          </button>
+          
           <button className="text-gray-400 hover:text-gray-600">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -518,16 +697,29 @@ const RightPanel: React.FC<RightPanelProps> = ({ conversationId }) => {
           </button>
         </div>
       </div>
+      <div className='flex items-center gap-4.5 mb-2 '>
+        <img src="/icons/user1.svg" alt="user Logo" className="w-6 h-6" />
+        <img src="/icons/user2.svg" alt="user Logo" className="w-6 h-6" />  
+        <img src="/icons/user3.svg" alt="user Logo" className="w-6 h-6" />  
+      </div>
 
 
       {/* Dynamic Sections based on applicant data or conversation variables */}
       <div className="space-y-4">
         {/* Render new applicant details structure if available */}
-        {applicantData && applicantData.applicantDetails && (
+        {applicantData && applicantData.applicant_details && (
           <>
-            {Object.entries(applicantData.applicantDetails).map(([sectionKey, fields]) => 
-              Array.isArray(fields) && fields.length > 0 ? renderApplicantSection(sectionKey, fields) : null
-            )}
+            {Object.entries(applicantData.applicant_details).map(([sectionKey, fields]) => {
+              if (!Array.isArray(fields) || fields.length === 0) return null;
+              
+              // Use special rendering for documents section
+              if (sectionKey.toLowerCase() === 'documents') {
+                return renderDocumentsSection(sectionKey, fields);
+              }
+              
+              // Use regular rendering for other sections
+              return renderApplicantSection(sectionKey, fields);
+            })}
           </>
         )}
         {/* Show message when no data is available */}
@@ -546,6 +738,8 @@ const RightPanel: React.FC<RightPanelProps> = ({ conversationId }) => {
     </div>
   </div></div>
   )
-}
+});
+
+RightPanel.displayName = 'RightPanel';
 
 export default RightPanel   

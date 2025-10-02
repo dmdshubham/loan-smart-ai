@@ -7,7 +7,7 @@ export interface FieldItem {
   isVerified?: boolean;
 }
 
-export interface ApplicantDetails {
+export interface applicant_details {
   personalDetails?: FieldItem[];
   demographics?: FieldItem[];
   loanDetails?: FieldItem[];
@@ -33,7 +33,7 @@ export interface ConversationVariable {
 
 export interface ApplicantData {
   conversation_id: string;
-  applicantDetails: ApplicantDetails;
+  applicant_details: applicant_details;
   timestamp: string;
 }
 
@@ -89,7 +89,8 @@ class SocketService {
       console.log('Received session variables update:', response);
       
       // Check if this is the new applicant details structure
-      if (response.data?.applicantDetails) {
+      if (response.data?.applicant_details
+      ) {
         this.handleApplicantDataUpdate(response);
       } else if (Array.isArray(response.data)) {
         // Old structure - handle as before
@@ -106,7 +107,7 @@ class SocketService {
   private handleApplicantDataUpdate(response: any) {
     const applicantData: ApplicantData = {
       conversation_id: response.conversation_id,
-      applicantDetails: response.data.applicantDetails,
+      applicant_details: response.data.applicant_details,
       timestamp: response.timestamp
     };
     

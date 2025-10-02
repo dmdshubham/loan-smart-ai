@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { useAgentChat } from '@/hooks/useAgentChat';
 import FileUpload from '@/components/FileUpload';
-import RightPanel from '@/components/RightPanel';
+import RightPanel, { RightPanelRef } from '@/components/RightPanel';
 import DocumentUploadInline from '@/components/DocumentUploadInline';
 import { speechRecognitionService } from '@/service/speechRecognition';
 import { processBotMessageHTML } from '@/common/utils';
@@ -22,6 +22,7 @@ export default function AgentChatPage() {
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const rightPanelRef = useRef<RightPanelRef>(null);
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
 
   const {
@@ -36,12 +37,27 @@ export default function AgentChatPage() {
   } = useAgentChat(initialThreadId);
   
 
-  // Load user photo from localStorage
+  // Load user photo from localStorage and listen for updates
   useEffect(() => {
     const storedPhoto = localStorage.getItem('userPhoto');
     if (storedPhoto) {
       setUserPhoto(storedPhoto);
     }
+
+    // Listen for custom event when localStorage userPhoto is updated
+    const handlePhotoUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent<{ photoUrl: string }>;
+      if (customEvent.detail?.photoUrl) {
+        setUserPhoto(customEvent.detail.photoUrl);
+        console.log('User photo updated:', customEvent.detail.photoUrl);
+      }
+    };
+
+    window.addEventListener('userPhotoUpdated', handlePhotoUpdate);
+
+    return () => {
+      window.removeEventListener('userPhotoUpdated', handlePhotoUpdate);
+    };
   }, []);
 
   // Auto-scroll to bottom when messages change or streaming updates
@@ -122,6 +138,10 @@ export default function AgentChatPage() {
     
     setInputText('');
     setAttachedFiles([]);
+    
+    // Reset expanded sections in right panel
+    rightPanelRef.current?.resetExpandedSections();
+    
     // Send message with attached files
     await sendMessage(text, files);
   };
@@ -131,6 +151,10 @@ export default function AgentChatPage() {
     if (!text) return;
     setInputText('');
     speechRecognitionService.clearTranscripts();
+    
+    // Reset expanded sections in right panel
+    rightPanelRef.current?.resetExpandedSections();
+    
     await sendMessage(text, []);
   };
 
@@ -158,6 +182,9 @@ export default function AgentChatPage() {
         // Multiple files: document_type_urls="url1", "url2", "url3"
         formattedMessage = `${docTypeLower}_urls="${fileUrls.join('", "')}"`;
       }
+      
+      // Reset expanded sections in right panel
+      rightPanelRef.current?.resetExpandedSections();
       
       // Send the formatted message to the API
       await sendMessage(formattedMessage, []);
@@ -202,7 +229,7 @@ export default function AgentChatPage() {
         <p className="text-xs text-gray-600 font-medium">
           📎 {formatDocumentType(documentType)} {urls.length > 1 ? `(${urls.length} files)` : ''}
         </p>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {fields.map((field, index) => {
             const isPdf = field.url.toLowerCase().endsWith('.pdf');
             
@@ -219,9 +246,9 @@ export default function AgentChatPage() {
                 className="relative group"
               >
                 {isPdf ? (
-                  <div className="h-20 bg-red-50 border border-red-200 rounded-lg flex items-center justify-center hover:bg-red-100 transition-colors">
+                  <div className="h-16 sm:h-20 bg-red-50 border border-red-200 rounded-lg flex items-center justify-center hover:bg-red-100 transition-colors">
                     <div className="text-center">
-                      <svg className="w-8 h-8 mx-auto text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-6 h-6 sm:w-8 sm:h-8 mx-auto text-red-500" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18.5,9H13V3.5L18.5,9M6,20V4H12V10H18V20H6Z" />
                       </svg>
                       <p className="text-xs text-red-600 mt-1">PDF</p>
@@ -231,16 +258,16 @@ export default function AgentChatPage() {
                   <img 
                     src={field.url} 
                     alt={`${label}`}
-                    className="w-full h-20 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition-opacity"
+                    className="w-full h-16 sm:h-20 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition-opacity"
                   />
                 )}
                 {/* Label badge */}
-                <div className="absolute top-1 left-1 bg-black bg-opacity-60 text-white text-xs px-2 py-0.5 rounded">
+                <div className="absolute top-0.5 left-0.5 sm:top-1 sm:left-1 bg-black bg-opacity-60 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded">
                   {label}
                 </div>
                 {/* Hover overlay */}
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z" />
                   </svg>
                 </div>
@@ -290,68 +317,103 @@ export default function AgentChatPage() {
 
       {/* Main Content */}
       <div className="flex-1 flex max-w-7xl mx-auto w-full z-10">
-        <div className="flex-1 my-4">
+        <div className="flex-1 my-0 md:my-2 lg:my-4">
           <div 
-            className="p-1 rounded-[30px] h-[calc(100vh-42px)]"
+            className="p-0 md:p-1 rounded-none md:rounded-[20px] lg:rounded-[30px] h-screen md:h-[calc(100vh-16px)] lg:h-[calc(100vh-42px)]"
             style={{
               background: 'linear-gradient(180deg, #2E71FE 0%, #6AFFB6 100%)',
               boxShadow: '0px 0px 20px 0px #00000026'
             }}
           >
-            <div className="bg-gradient-to-br h-[calc(100vh-50px)] from-green-50 via-pink-50 to-blue-50 h-[600px] flex flex-col relative overflow-hidden backdrop-blur-sm rounded-[26px]">
+            <div className="bg-gradient-to-br h-screen md:h-[calc(100vh-24px)] lg:h-[calc(100vh-50px)] from-green-50 via-pink-50 to-blue-50 flex flex-col relative overflow-hidden backdrop-blur-sm rounded-none md:rounded-[16px] lg:rounded-[26px]">
               {/* Subtle inner glow */}
               <div className="absolute inset-0 bg-gradient-to-br from-green-100/30 via-pink-100/20 to-blue-100/30 rounded-lg"></div>
             
               {/* Sticky Header inside chat container */}
-              <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b border-gray-200/50 px-6 py-4">
-                <div className="flex items-center justify-between ">
-                  {/* Qualtech Logo */}
-                  <div className="flex items-center space-x-2">
-                    <img src="/icons/logo.svg" alt="Qualtech Logo" className="w-[90px] h-[35px]" />
-                  </div>
-
-                  {/* Center - miFIN.AI branding and progress */}
-                <div className="flex items-center justify-center space-x-6">
-                  <h1 className="text-2xl font-bold">
+              <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b border-gray-200/50 px-3 sm:px-4 md:px-3 py-2 md:py-3">
+                {/* Mobile-only progress bar at the very top */}
+                <div className="sm:hidden mb-2 flex items-center justify-between">
+                  <h1 className="text-sm font-bold">
                     <span className="text-blue-600">mi</span>
                     <span className="text-blue-600">FIN</span>
                     <span className="text-green-500">.AI</span>
                   </h1>
-                  
-                  {/* Progress indicator with bars */}
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm font-bold text-gray-800">1/5</span>
-                    <div className="flex space-x-1">
-                      <div className="w-10 h-1.5 bg-green-500 rounded-full shadow-sm"></div>
-                      <div className="w-10 h-1.5 bg-gray-300 rounded-full"></div>
-                      <div className="w-10 h-1.5 bg-gray-300 rounded-full"></div>
-                      <div className="w-10 h-1.5 bg-gray-300 rounded-full"></div>
-                      <div className="w-10 h-1.5 bg-gray-300 rounded-full"></div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-bold text-gray-800">1/5</span>
+                    <div className="flex space-x-0.5">
+                      <div className="w-1 h-5 bg-green-500 rounded-full"></div>
+                      <div className="w-1 h-5 bg-gray-300 rounded-full"></div>
+                      <div className="w-1 h-5 bg-gray-300 rounded-full"></div>
+                      <div className="w-1 h-5 bg-gray-300 rounded-full"></div>
+                      <div className="w-1 h-5 bg-gray-300 rounded-full"></div>
                     </div>
                   </div>
                 </div>
-                  {/* User profile */}
+
+                <div className="flex items-center justify-between">
+                  {/* Qualtech Logo */}
                   <div className="flex items-center space-x-2">
+                    <img src="/icons/logo.svg" alt="Qualtech Logo" className="w-16 h-6 sm:w-20 sm:h-7 md:w-[90px] md:h-[35px]" />
+                  </div>
+
+                  {/* Center - miFIN.AI branding and progress */}
+                  <div className="hidden sm:flex items-center justify-center space-x-3 md:space-x-6">
+                    <h1 className="text-lg md:text-2xl font-bold">
+                      <span className="text-blue-600">mi</span>
+                      <span className="text-blue-600">FIN</span>
+                      <span className="text-green-500">.AI</span>
+                    </h1>
+                    
+                   
+                  </div>
+                  
+                  {/* User profile */}
+                  <div className="flex items-center space-x-1 sm:space-x-2">
+
+                  <div className="hidden md:flex items-center space-x-3 mr-3">
+                      <span className="text-sm font-bold text-gray-800">1/5</span>
+                      <div className="flex space-x-1">
+                        <div className="w-1 h-5 bg-green-500 rounded-full shadow-sm"></div>
+                        <div className="w-1 h-5 bg-gray-300 rounded-full"></div>
+                        <div className="w-1 h-5 bg-gray-300 rounded-full"></div>
+                        <div className="w-1 h-5 bg-gray-300 rounded-full"></div>
+                        <div className="w-1 h-5 bg-gray-300 rounded-full"></div>
+                      </div>
+                    </div>
+                    
+                    {/* Compact progress for tablet */}
+                    <div className="flex md:hidden items-center space-x-2 mr-3">
+                      <span className="text-xs font-bold text-gray-800">1/5</span>
+                      <div className="flex space-x-0.5">
+                        <div className="w-1 h-4 bg-green-500 rounded-full"></div>
+                        <div className="w-1 h-4 bg-gray-300 rounded-full"></div>
+                        <div className="w-1 h-4 bg-gray-300 rounded-full"></div>
+                        <div className="w-1 h-4 bg-gray-300 rounded-full"></div>
+                        <div className="w-1 h-4 bg-gray-300 rounded-full"></div>
+                       
+                      </div>
+                    </div>
+
                     {userPhoto ? (
                       <img 
                         src={userPhoto} 
                         alt="User" 
-                        className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                        className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full object-cover border-2 border-white shadow-sm"
                       />
                     ) : (
                       <img 
                         src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face&auto=format" 
                         alt="User" 
-                        className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                        className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full object-cover border-2 border-white shadow-sm"
                       />
                     )}
-                    <span className="text-sm font-semibold text-gray-800">User</span>
+                    <span className="hidden sm:inline text-xs md:text-sm font-semibold text-gray-800">User</span>
                   </div>
                 </div>
               </div>
             
             {/* Messages Area */}
-            <div className="relative flex-1 px-6 py-6 overflow-y-auto space-y-4">
+            <div className="relative flex-1 px-3 sm:px-4 md:px-6 py-4 md:py-6 overflow-y-auto space-y-3 md:space-y-4">
               {messages.map((message, index) => {
                 // Parse document URLs from message text
                 const parsedUrls = parseDocumentUrls(message.text);
@@ -364,7 +426,7 @@ export default function AgentChatPage() {
                 return (
                   <div key={`message-${message.id}-${index}`} className={`flex ${message.isBot ? 'justify-start' : 'justify-end'}`}>
                     {message.isBot ? (
-                      <div className="bg-white rounded-2xl px-4 py-3 max-w-md shadow-sm border border-gray-100">
+                      <div className="bg-white rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 max-w-[85%] sm:max-w-md shadow-sm border border-gray-100">
                         {!hasDocumentUrls && (
                           <div 
                             className="text-gray-800 text-sm bot-message-content"
@@ -386,10 +448,10 @@ export default function AgentChatPage() {
                         )}
                       </div>
                     ) : (
-                      <div className="bg-blue-500 text-white rounded-2xl px-4 py-3 max-w-sm shadow-sm">
+                      <div className="bg-blue-500 text-white rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 max-w-[85%] sm:max-w-sm shadow-sm">
                         {hasDocumentUrls ? (
                           <>
-                            <p className="text-sm leading-relaxed mb-2">
+                            <p className="text-xs sm:text-sm leading-relaxed mb-2">
                               Uploaded {formatDocumentType(parsedUrls.documentType!)}
                             </p>
                             <div className="bg-blue-400 bg-opacity-50 rounded-lg p-2">
@@ -397,7 +459,7 @@ export default function AgentChatPage() {
                             </div>
                           </>
                         ) : (
-                          <p className="text-sm leading-relaxed">
+                          <p className="text-xs sm:text-sm leading-relaxed">
                             {message.text}
                           </p>
                         )}
@@ -414,7 +476,7 @@ export default function AgentChatPage() {
                 
                 return (
                   <div key="streaming-message" className="flex justify-start">
-                    <div className="bg-white rounded-2xl px-4 py-3 max-w-md shadow-sm border border-gray-100 bg-opacity-90">
+                    <div className="bg-white rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 max-w-[85%] sm:max-w-md shadow-sm border border-gray-100 bg-opacity-90">
                       {!hasDocumentUrls && (
                         <div 
                           className="text-gray-800 text-sm bot-message-content"
@@ -450,24 +512,27 @@ export default function AgentChatPage() {
             </div>
 
             {/* Bottom Bar with Siri-style interface */}
-            <div className="relative px-6 pb-6">
+            <div className="relative px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-6">
               <div className="flex items-center justify-between">
-                {/* Keyboard Icon */}
-                <button className="p-3 text-gray-400 hover:text-gray-600 transition-colors">
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                {/* Keyboard Icon - hide on mobile */}
+                <button className="hidden sm:block p-2 md:p-3 text-gray-400 hover:text-gray-600 transition-colors">
+                  <svg className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M20 5H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-9 3h2v2h-2V8zm0 3h2v2h-2v-2zM8 8h2v2H8V8zm0 3h2v2H8v-2zm-1 2H5v-2h2v2zm0-3H5V8h2v2zm9 7H8v-2h8v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z"/>
                   </svg>
                 </button>
 
+                {/* Spacer for mobile centering */}
+                <div className="sm:hidden w-8"></div>
+
                 {/* Siri-style Voice Interface with depth */}
                 <div className="relative">
                   {/* Outer glow rings */}
-                  <div className={`absolute inset-0 w-14 h-14 rounded-full transition-all duration-500 ${
+                  <div className={`absolute inset-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full transition-all duration-500 ${
                     isListening 
                       ? 'bg-gradient-to-r from-purple-400/40 to-blue-400/40 animate-ping scale-110' 
                       : 'bg-gradient-to-r from-blue-400/20 to-purple-400/20 scale-100'
                   }`}></div>
-                  <div className={`absolute inset-0 w-14 h-14 rounded-full transition-all duration-300 ${
+                  <div className={`absolute inset-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full transition-all duration-300 ${
                     isListening 
                       ? 'bg-gradient-to-r from-purple-300/30 to-blue-300/30 animate-pulse scale-105' 
                       : 'bg-gradient-to-r from-blue-300/15 to-purple-300/15'
@@ -476,7 +541,7 @@ export default function AgentChatPage() {
                   <button
                     onClick={toggleListening}
                     disabled={!isSpeechSupported}
-                    className={`relative w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl ${
+                    className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl ${
                       !isSpeechSupported
                         ? 'bg-gray-300 cursor-not-allowed opacity-50'
                         : isListening 
@@ -496,14 +561,14 @@ export default function AgentChatPage() {
                     <div className="relative z-10">
                       {isListening ? (
                         <div className="flex items-center justify-center space-x-0.5">
-                          <div className="w-1 bg-white rounded-full animate-pulse" style={{height: '16px', animationDelay: '0ms'}}></div>
-                          <div className="w-1 bg-white rounded-full animate-pulse" style={{height: '24px', animationDelay: '100ms'}}></div>
-                          <div className="w-1 bg-white rounded-full animate-pulse" style={{height: '12px', animationDelay: '200ms'}}></div>
-                          <div className="w-1 bg-white rounded-full animate-pulse" style={{height: '20px', animationDelay: '300ms'}}></div>
-                          <div className="w-1 bg-white rounded-full animate-pulse" style={{height: '8px', animationDelay: '400ms'}}></div>
+                          <div className="w-0.5 sm:w-1 bg-white rounded-full animate-pulse" style={{height: '14px', animationDelay: '0ms'}}></div>
+                          <div className="w-0.5 sm:w-1 bg-white rounded-full animate-pulse" style={{height: '20px', animationDelay: '100ms'}}></div>
+                          <div className="w-0.5 sm:w-1 bg-white rounded-full animate-pulse" style={{height: '10px', animationDelay: '200ms'}}></div>
+                          <div className="w-0.5 sm:w-1 bg-white rounded-full animate-pulse" style={{height: '18px', animationDelay: '300ms'}}></div>
+                          <div className="w-0.5 sm:w-1 bg-white rounded-full animate-pulse" style={{height: '8px', animationDelay: '400ms'}}></div>
                         </div>
                       ) : (
-                        <svg className="w-7 h-7 text-white drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
                           <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
                         </svg>
@@ -512,27 +577,30 @@ export default function AgentChatPage() {
                   </button>
                 </div>
 
-                {/* Mute Icon */}
-                <button className="p-3 text-gray-400 hover:text-gray-600 transition-colors">
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                {/* Mute Icon - hide on mobile */}
+                <button className="hidden sm:block p-2 md:p-3 text-gray-400 hover:text-gray-600 transition-colors">
+                  <svg className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
                   </svg>
                 </button>
+
+                {/* Spacer for mobile centering */}
+                <div className="sm:hidden w-8"></div>
               </div>
               
-              <div className="text-center mt-2">
+              <div className="text-center mt-1.5 sm:mt-2">
                 {isSpeechSupported ? (
-                  <p className="text-gray-500 text-sm font-medium">Speak your answers</p>
+                  <p className="text-gray-500 text-xs sm:text-sm font-medium">Speak your answers</p>
                 ) : (
-                  <p className="text-gray-400 text-sm font-medium">Voice input not supported in this browser</p>
+                  <p className="text-gray-400 text-xs sm:text-sm font-medium">Voice input not supported in this browser</p>
                 )}
               </div>
 
               {/* Speech Text Indicator (removed in favor of showing in input) */}
 
               {/* Text Input Area */}
-              <div className="mt-4">
-                <div className="flex items-center space-x-3 bg-white rounded-full border border-gray-200 px-4 py-2 shadow-sm">
+              <div className="mt-3 sm:mt-4">
+                <div className="flex items-center space-x-2 sm:space-x-3 bg-white rounded-full border border-gray-200 px-3 sm:px-4 py-2 shadow-sm">
                   {/* <FileUpload 
                     onFileUploaded={handleFileUploaded}
                     onError={handleFileUploadError}
@@ -543,13 +611,13 @@ export default function AgentChatPage() {
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyPress={handleTextareaKeyPress}
                     placeholder="Type your message here..."
-                    className="flex-1 outline-none text-sm text-gray-700 placeholder-gray-400"
+                    className="flex-1 outline-none text-xs sm:text-sm text-gray-700 placeholder-gray-400"
                   />
                   <button
                     onClick={handleSendMessage}
                     className="p-1 text-blue-500 hover:text-blue-600 transition-colors"
                   >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                     </svg>
                   </button>
@@ -567,7 +635,10 @@ export default function AgentChatPage() {
           </div>
         </div>
 
-        <RightPanel conversationId={actualThreadId} />
+        {/* Right Panel - Hide on mobile, show on tablet and desktop */}
+        <div className="hidden md:block">
+          <RightPanel ref={rightPanelRef} conversationId={actualThreadId} />
+        </div>
 
         
       </div>

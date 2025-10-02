@@ -81,6 +81,19 @@ export default function DocumentUploadInline({
       // Upload file and get clean URL
       const uploadResult = await UploadService.uploadFileWithPresignedUrl(file);
       
+      // Save image URL to localStorage for user photo
+      const isImage = file.type.startsWith('image/');
+      if (isImage && uploadResult.cleanUrl) {
+        localStorage.setItem('userPhoto', uploadResult.cleanUrl);
+        localStorage.setItem('userPhotoTimestamp', new Date().toISOString());
+        console.log('Photo URL saved to localStorage:', uploadResult.cleanUrl);
+        
+        // Dispatch custom event to notify other components
+        window.dispatchEvent(new CustomEvent('userPhotoUpdated', { 
+          detail: { photoUrl: uploadResult.cleanUrl } 
+        }));
+      }
+      
       // Update with success - find by file object reference
       setUploadedFiles(prev => prev.map((f) => 
         f.file === file
@@ -287,8 +300,8 @@ export default function DocumentUploadInline({
             />
           </label>
 
-          {/* Take Selfie Option */}
-          <button
+      {documentType === 'Photo' && (
+        <button
             onClick={openCamera}
             className="w-full flex flex-col items-center justify-center border-2 border-dashed border-green-300 rounded-lg p-3 hover:border-green-400 hover:bg-green-50 transition-colors"
           >
@@ -298,6 +311,7 @@ export default function DocumentUploadInline({
             <span className="text-xs text-green-600 font-medium">Take Selfie</span>
             <span className="text-xs text-gray-500 mt-0.5">Use your camera</span>
           </button>
+        )}
         </div>
       )}
 
