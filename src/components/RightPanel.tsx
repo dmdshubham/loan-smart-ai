@@ -556,17 +556,19 @@ const RightPanel = forwardRef<RightPanelRef, RightPanelProps>(({ conversationId 
             {fields.map((field) => {
               const fieldId = `${sectionKey}.${field.key}`;
               const isAnimated = animatedFields.has(fieldId);
-              
+              if(isAnimated){
+                console.log("fieldId",fieldId);
+              }
               return (
                 <div 
                   key={field.key} 
                   className={`flex items-center justify-between py-1 px-2.5 ${
-                    isAnimated ? 'field-zoom-animation' : ''
+                    isAnimated ? 'field-zoom-animation scale-105 bg-[#edeff2] border-1 text-medium border-blue-700 shadow-lg animate-pulse' : ''
                   }`}
                 >
                   <span className="text-xs font-normal text-black">{field.lable}</span>
                   <div className="flex items-center space-x-3">
-                    <span className="text-sm font-semibold text-gray-900">
+                    <span className="text-sm font-normal text-gray-900">
                       {formatValue(field.value)}
                     </span>
                     <div className="flex items-center space-x-1">
@@ -623,6 +625,22 @@ const RightPanel = forwardRef<RightPanelRef, RightPanelProps>(({ conversationId 
           position: relative;
           overflow: hidden;
         }
+
+        .gradient-wave-green {  
+          background: linear-gradient(
+            90deg,
+            rgba(34, 197, 94, 0.1) 0%,
+            rgba(16, 185, 129, 0.3) 25%,
+            rgba(34, 197, 94, 0.2) 50%,
+            rgba(16, 185, 129, 0.3) 75%,
+            rgba(34, 197, 94, 0.1) 100%
+          );
+          background-size: 200% 100%;
+          animation: gradientWave 2s ease-in-out infinite, blink 1.5s ease-in-out infinite;
+          border-radius: 8px;
+          position: relative;
+          overflow: hidden;
+        }
         
         .gradient-wave::before {
           content: '';
@@ -667,7 +685,7 @@ const RightPanel = forwardRef<RightPanelRef, RightPanelProps>(({ conversationId 
             background-color: transparent;
           }
           50% {
-            transform: scale(1.05);
+            transform: scale(1.5);
             background-color: rgba(34, 197, 94, 0.1);
             box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
           }
@@ -678,7 +696,7 @@ const RightPanel = forwardRef<RightPanelRef, RightPanelProps>(({ conversationId 
         }
         
         .field-zoom-animation {
-          animation: fieldZoom 0.8s ease-in-out;
+          animation: fieldZoom 1.5s ease-in-out;
           border-radius: 4px;
           transition: all 0.3s ease;
         }
