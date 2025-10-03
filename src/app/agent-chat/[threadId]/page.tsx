@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { useAgentChat } from '@/hooks/useAgentChat';
 import FileUpload from '@/components/FileUpload';
@@ -24,7 +24,8 @@ export default function AgentChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const rightPanelRef = useRef<RightPanelRef>(null);
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
-
+  const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
+console.log("isUploadingDoc",isUploadingDoc);
   const {
     actualThreadId,
     messages,
@@ -65,7 +66,7 @@ export default function AgentChatPage() {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, currentStreamingMessage]);
+  }, [messages, currentStreamingMessage, uploadedUrls]);
 
   // Initialize speech recognition
   useEffect(() => {
@@ -194,6 +195,10 @@ export default function AgentChatPage() {
       setIsUploadingDoc(false);
     }
   };
+
+  const handleUploadedUrlsChange = useCallback((urls: string[]) => {
+    setUploadedUrls(urls);
+  }, []);
 
   const handleTextareaKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -331,25 +336,6 @@ export default function AgentChatPage() {
             
               {/* Sticky Header inside chat container */}
               <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b border-gray-200/50 px-3 sm:px-4 md:px-3 py-2 md:py-3">
-                {/* Mobile-only progress bar at the very top */}
-                <div className="sm:hidden mb-2 flex items-center justify-between">
-                  <h1 className="text-sm font-bold">
-                    <span className="text-blue-600">mi</span>
-                    <span className="text-blue-600">FIN</span>
-                    <span className="text-green-500">.AI</span>
-                  </h1>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs font-bold text-gray-800">1/5</span>
-                    <div className="flex space-x-0.5">
-                      <div className="w-1 h-5 bg-green-500 rounded-full"></div>
-                      <div className="w-1 h-5 bg-gray-300 rounded-full"></div>
-                      <div className="w-1 h-5 bg-gray-300 rounded-full"></div>
-                      <div className="w-1 h-5 bg-gray-300 rounded-full"></div>
-                      <div className="w-1 h-5 bg-gray-300 rounded-full"></div>
-                    </div>
-                  </div>
-                </div>
-
                 <div className="flex items-center justify-between">
                   {/* Qualtech Logo */}
                   <div className="flex items-center space-x-2">
@@ -357,7 +343,7 @@ export default function AgentChatPage() {
                   </div>
 
                   {/* Center - miFIN.AI branding and progress */}
-                  <div className="hidden sm:flex items-center justify-center space-x-3 md:space-x-6">
+                  <div className="items-center justify-center space-x-3 md:space-x-6">
                     <h1 className="text-lg md:text-2xl font-bold">
                       <span className="text-blue-600">mi</span>
                       <span className="text-blue-600">FIN</span>
@@ -370,7 +356,7 @@ export default function AgentChatPage() {
                   {/* User profile */}
                   <div className="flex items-center space-x-1 sm:space-x-2">
 
-                  <div className="hidden md:flex items-center space-x-3 mr-3">
+                  <div className="hidden sm:flex items-center space-x-3 mr-3">
                       <span className="text-sm font-bold text-gray-800">1/5</span>
                       <div className="flex space-x-1">
                         <div className="w-1 h-5 bg-green-500 rounded-full shadow-sm"></div>
@@ -382,7 +368,7 @@ export default function AgentChatPage() {
                     </div>
                     
                     {/* Compact progress for tablet */}
-                    <div className="flex md:hidden items-center space-x-2 mr-3">
+                    <div className="flex sm:hidden items-center space-x-2 mr-3">
                       <span className="text-xs font-bold text-gray-800">1/5</span>
                       <div className="flex space-x-0.5">
                         <div className="w-1 h-4 bg-green-500 rounded-full"></div>
@@ -441,9 +427,10 @@ export default function AgentChatPage() {
                         {showUploadUI && uploadRequest && (
                           <DocumentUploadInline
                             documentType={uploadRequest.documentType}
-                            maxFiles={5}
+                            maxFiles={3}
                             onUpload={handleDocumentUpload}
                             isUploading={isUploadingDoc}
+                            onUploadedUrlsChange={handleUploadedUrlsChange}
                           />
                         )}
                       </div>

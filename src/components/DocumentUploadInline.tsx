@@ -13,6 +13,7 @@ interface DocumentUploadInlineProps {
   maxFiles?: number; // Maximum number of files allowed (default: 1)
   onUpload: (fileUrls: string[], documentType: string) => void;
   isUploading?: boolean;
+  onUploadedUrlsChange?: (urls: string[]) => void; // Callback when uploaded URLs change
 }
 
 export default function DocumentUploadInline({
@@ -20,6 +21,7 @@ export default function DocumentUploadInline({
   maxFiles = 1,
   onUpload,
   isUploading = false,
+  onUploadedUrlsChange,
 }: DocumentUploadInlineProps) {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFileData[]>([]);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -197,6 +199,16 @@ export default function DocumentUploadInline({
     }
   }, [stream]);
 
+  // Notify parent when uploaded URLs change
+  useEffect(() => {
+    if (onUploadedUrlsChange) {
+      const urls = uploadedFiles
+        .filter(f => f.url && !f.error)
+        .map(f => f.url!);
+      onUploadedUrlsChange(urls);
+    }
+  }, [uploadedFiles, onUploadedUrlsChange]);
+
   const hasSuccessfulUploads = uploadedFiles.some(f => f.url && !f.error);
   const isAnyUploading = uploadedFiles.some(f => f.uploading);
   const canAddMore = uploadedFiles.length < maxFiles;
@@ -210,11 +222,11 @@ export default function DocumentUploadInline({
           </svg>
           <span className="text-sm font-medium">Upload {documentType}</span>
         </div>
-        {maxFiles > 1 && (
+        {/* {maxFiles > 1 && (
           <span className="text-xs text-gray-600">
             {uploadedFiles.length} / {maxFiles} files
           </span>
-        )}
+        )} */}
       </div>
       
       {/* Uploaded files list */}
