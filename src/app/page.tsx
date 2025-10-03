@@ -12,6 +12,10 @@ export default function ChatPage() {
     window.location.href = `/agent-chat/${threadId}`;
   };
 
+  useEffect(() => {
+    localStorage.clear();
+  }, []);
+  
   const handleGlobalKeyPress = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -28,6 +32,8 @@ export default function ChatPage() {
       document.removeEventListener('keydown', handleGlobalKeyPress);
     };
   }, []);
+
+ 
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col relative">

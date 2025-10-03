@@ -566,9 +566,9 @@ const RightPanel = forwardRef<RightPanelRef, RightPanelProps>(({ conversationId 
                     isAnimated ? 'field-zoom-animation scale-105 bg-[#edeff2] border-1 text-medium border-blue-700 shadow-lg animate-pulse' : ''
                   }`}
                 >
-                  <span className="text-xs font-normal text-black">{field.lable}</span>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm font-normal text-end text-gray-900">
+                  <span className="text-xs font-normal w-[40%] text-black">{field.lable}</span>
+                  <div className="flex items-end justify-end space-x-3  w-[58%]">
+                    <span className="text-xs font-normal text-end text-gray-900">
                       {formatValue(field.value)}
                     </span>
                     <div className="flex items-center space-x-1">

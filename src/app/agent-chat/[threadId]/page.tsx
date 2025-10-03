@@ -207,6 +207,8 @@ console.log("isUploadingDoc",isUploadingDoc);
     }
   };
 
+ 
+
   const toggleListening = () => {
     if (!isSpeechSupported) {
       console.warn('Speech recognition not supported');

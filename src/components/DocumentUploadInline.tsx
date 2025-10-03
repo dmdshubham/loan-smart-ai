@@ -322,7 +322,7 @@ export default function DocumentUploadInline({
             />
           </label>
 
-      {documentType === 'Photo' && showPhotoUI && (
+      {(documentType === 'Photo' || true) && (
         <button
             onClick={openCamera}
             className="w-1/2 mb-2 flex flex-col items-center justify-center border-2 border-dashed border-green-300 rounded-lg p-3 hover:border-green-400 hover:bg-green-50 transition-colors"
@@ -330,7 +330,7 @@ export default function DocumentUploadInline({
             <svg className="w-5 h-5 text-green-400 mb-1" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
             </svg>
-            <span className="text-xs text-green-600 font-medium">Take Selfie</span>
+            <span className="text-xs text-green-600 font-medium">Capture Photo</span>
             <span className="text-xs text-gray-500">Use your camera</span>
           </button>
         )}

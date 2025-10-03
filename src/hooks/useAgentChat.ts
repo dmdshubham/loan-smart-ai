@@ -111,6 +111,7 @@ export function useAgentChat(initialThreadId: string): UseAgentChatReturn {
       return;
     }
   };
+ 
 
   // Initialize connection once with an empty message to bootstrap the thread
   useEffect(() => {
