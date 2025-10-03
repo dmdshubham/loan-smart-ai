@@ -7,7 +7,7 @@ import FileUpload from '@/components/FileUpload';
 import RightPanel, { RightPanelRef } from '@/components/RightPanel';
 import DocumentUploadInline from '@/components/DocumentUploadInline';
 import { speechRecognitionService } from '@/service/speechRecognition';
-import { processBotMessageHTML } from '@/common/utils';
+import { openLinkInNewTab, processBotMessageHTML } from '@/common/utils';
 import { parseDocumentUrls, formatDocumentType, detectDocumentUploadRequest, formatApiMessage } from '@/utils/document-detector';
 
 
@@ -226,28 +226,31 @@ console.log("isUploadingDoc",isUploadingDoc);
   // Render document URLs component with field labels
   const renderDocumentUrls = (parsedData: ReturnType<typeof parseDocumentUrls>) => {
     const { urls, documentType, fields } = parsedData;
-    
     if (!documentType || urls.length === 0) return null;
     
     return (
-      <div className="mt-2 space-y-2">
-        <p className="text-xs text-gray-600 font-medium">
-          📎 {formatDocumentType(documentType)} {urls.length > 1 ? `(${urls.length} files)` : ''}
+      <div className="mt-1 space-y-2">
+        <p className="text-xs text-white font-medium">
+        {formatDocumentType(documentType)} {urls.length > 1 ? `(${urls.length} files)` : ''}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {fields.map((field, index) => {
             const isPdf = field.url.toLowerCase().endsWith('.pdf');
             
-            // Extract label from field name (e.g., "front" from "aadhaar_card_front_url")
-            const labelMatch = field.fieldName.match(/_(front|back)_url/i);
-            const label = labelMatch ? labelMatch[1].charAt(0).toUpperCase() + labelMatch[1].slice(1) : `${index + 1}`;
+            // Extract label from field name
+            // Handles: "aadhaar_card_front_url" -> "Front", "salary_slip_urls_1" -> "1", etc.
+            const frontBackMatch = field.fieldName.match(/_(front|back)_url/i);
+            const indexMatch = field.fieldName.match(/_(\d+)$/);
+            const label = frontBackMatch 
+              ? frontBackMatch[1].charAt(0).toUpperCase() + frontBackMatch[1].slice(1)
+              : indexMatch 
+                ? indexMatch[1]
+                : `${index + 1}`;
             
             return (
-              <a
+              <div
                 key={index}
-                href={field.url}
-                target="_blank"
-                rel="noopener noreferrer"
+                onClick={() => field.url && openLinkInNewTab(field.url)}
                 className="relative group"
               >
                 {isPdf ? (
@@ -267,16 +270,16 @@ console.log("isUploadingDoc",isUploadingDoc);
                   />
                 )}
                 {/* Label badge */}
-                <div className="absolute top-0.5 left-0.5 sm:top-1 sm:left-1 bg-black bg-opacity-60 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded">
+                {/* <div className="absolute top-0.5 left-0.5 sm:top-1 sm:left-1 bg-black bg-opacity-60 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded">
                   {label}
-                </div>
+                </div> */}
                 {/* Hover overlay */}
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded-lg flex items-center justify-center">
+                {/* <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded-lg flex items-center justify-center">
                   <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z" />
                   </svg>
-                </div>
-              </a>
+                </div> */}
+              </div>
             );
           })}
         </div>

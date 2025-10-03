@@ -568,7 +568,7 @@ const RightPanel = forwardRef<RightPanelRef, RightPanelProps>(({ conversationId 
                 >
                   <span className="text-xs font-normal text-black">{field.lable}</span>
                   <div className="flex items-center space-x-3">
-                    <span className="text-sm font-normal text-gray-900">
+                    <span className="text-sm font-normal text-end text-gray-900">
                       {formatValue(field.value)}
                     </span>
                     <div className="flex items-center space-x-1">
@@ -706,14 +706,14 @@ const RightPanel = forwardRef<RightPanelRef, RightPanelProps>(({ conversationId 
       {/* Applicant Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-black text-gray-900">Applicant Details</h2>
-        <div className="flex items-center space-x-2">
+        {/* <div className="flex items-center space-x-2">
           
           <button className="text-gray-400 hover:text-gray-600">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
-        </div>
+        </div> */}
       </div>
       <div className='flex items-center gap-4.5 mb-2 '>
         <img src="/icons/user1.svg" alt="user Logo" className="w-6 h-6" />

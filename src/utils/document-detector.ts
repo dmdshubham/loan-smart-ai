@@ -23,18 +23,60 @@ export function parseDocumentUrls(text: string): ParsedDocumentUrls {
   const fields: DocumentField[] = []
   const urls: string[] = []
   
+  // First, try to match the multiple URLs pattern: field_urls="url1", "url2", "url3"
+  // This pattern matches: field_name_urls= followed by one or more quoted URLs separated by commas
+  const multiUrlPattern = /(\w+_urls)\s*=\s*("https?:\/\/[^"]+")(?:\s*,\s*("https?:\/\/[^"]+"))+/gi
+  let multiMatch
+  let processedRanges: Array<[number, number]> = []
+  
+  while ((multiMatch = multiUrlPattern.exec(text)) !== null) {
+    const fieldName = multiMatch[1]
+    const matchStart = multiMatch.index
+    const matchEnd = matchStart + multiMatch[0].length
+    
+    // Track that we've processed this range
+    processedRanges.push([matchStart, matchEnd])
+    
+    // Extract all URLs from the matched text
+    const matchedText = multiMatch[0]
+    const urlMatches = matchedText.match(/"(https?:\/\/[^"]+)"/g)
+    
+    if (urlMatches) {
+      urlMatches.forEach((urlMatch, index) => {
+        const url = urlMatch.replace(/"/g, '')
+        if (url && url.startsWith('http')) {
+          // Create a unique field name for each URL in the array
+          const indexedFieldName = `${fieldName}_${index + 1}`
+          fields.push({ fieldName: indexedFieldName, url })
+          urls.push(url)
+        }
+      })
+    }
+  }
+  
+  // Also try the single URL pattern for other formats
   // Match pattern: field_name='url' or field_name="url"
   // Handles formats like: aadhaar_card_front_url='...', aadhaar_card_back_url='...'
   const urlPattern = /(\w+_url[s]?)\s*=\s*["']([^"']+)["']/gi
   
   let match
   while ((match = urlPattern.exec(text)) !== null) {
-    const fieldName = match[1]
-    const url = match[2]
+    const matchStart = match.index
+    const matchEnd = matchStart + match[0].length
     
-    if (url && url.startsWith('http')) {
-      fields.push({ fieldName, url })
-      urls.push(url)
+    // Skip if this range was already processed by multi-URL pattern
+    const isProcessed = processedRanges.some(([start, end]) => 
+      matchStart >= start && matchEnd <= end
+    )
+    
+    if (!isProcessed) {
+      const fieldName = match[1]
+      const url = match[2]
+      
+      if (url && url.startsWith('http')) {
+        fields.push({ fieldName, url })
+        urls.push(url)
+      }
     }
   }
   
@@ -66,7 +108,9 @@ function extractDocumentType(fields: DocumentField[]): string {
   const firstField = fields[0].fieldName
   
   // Remove common suffixes to get the base type
+  // Handles: salary_slip_urls_1 -> salary_slip, aadhaar_card_front_url -> aadhaar_card
   const baseType = firstField
+    .replace(/_\d+$/i, '')           // Remove index suffix like _1, _2, _3
     .replace(/_front_url[s]?$/i, '')
     .replace(/_back_url[s]?$/i, '')
     .replace(/_url[s]?$/i, '')
@@ -75,6 +119,7 @@ function extractDocumentType(fields: DocumentField[]): string {
   if (fields.length > 1) {
     const allSameBase = fields.every(f => {
       const fBase = f.fieldName
+        .replace(/_\d+$/i, '')           // Remove index suffix like _1, _2, _3
         .replace(/_front_url[s]?$/i, '')
         .replace(/_back_url[s]?$/i, '')
         .replace(/_url[s]?$/i, '')
@@ -129,7 +174,7 @@ export function detectDocumentUploadRequest(message: string): DocumentUploadRequ
       sides: ['']
     },
     {
-      pattern: /(?:upload|attach|send|provide|share|submit).*?(?:your|a|the)?\s*photo(?!\s*(?:of|id|card))|(?:upload|attach|send|provide|share|submit).*?(?:selfie|picture|image)(?!\s*(?:of|card))/i,
+      pattern: /(?:upload|attach|send|provide|share|submit).*?(?:photo|selfie|picture|image).*?(?:yourself|verification|identity)|(?:photo|selfie|picture|image).*?(?:for\s+verification|of\s+yourself|of\s+you(?:\s|$))|(?:upload|attach|send|provide|share|submit).*?(?:your|a|the)?\s*(?:photo|selfie)(?!\s*(?:id|card))|(?:upload|attach|send|provide|share|submit).*?(?:picture|image)(?!\s*(?:of.*?card))/i,
       type: 'Photo',
       sides: ['']
     },
