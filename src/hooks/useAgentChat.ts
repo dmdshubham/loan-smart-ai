@@ -10,7 +10,7 @@ export interface ChatMessage {
 }
 
 interface UseAgentChatReturn {
-  actualThreadId: string;
+  actualThreadId: string | undefined;
   messages: ChatMessage[];
   isLoading: boolean;
   error: string | null;
@@ -20,8 +20,8 @@ interface UseAgentChatReturn {
   sendMessage: (text: string, fileUrls?: string[]) => Promise<void>;
 }
 
-export function useAgentChat(initialThreadId: string): UseAgentChatReturn {
-  const [actualThreadId, setActualThreadId] = useState<string>(initialThreadId);
+export function useAgentChat(initialThreadId: string | undefined): UseAgentChatReturn {
+  const [actualThreadId, setActualThreadId] = useState<string | undefined>(initialThreadId);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +34,7 @@ export function useAgentChat(initialThreadId: string): UseAgentChatReturn {
   const streamingMessageRef = useRef<string>('');
   const streamingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const hasInitializedRef = useRef<boolean>(false);
 
   useEffect(() => { isStreamingRef.current = isStreaming; }, [isStreaming]);
   useEffect(() => { streamingMessageRef.current = currentStreamingMessage; }, [currentStreamingMessage]);
@@ -77,10 +78,13 @@ export function useAgentChat(initialThreadId: string): UseAgentChatReturn {
 
   const handleSseEvent = (data: any) => {
     if (data?.type === 'thread_id' && data?.thread_id) {
-      setActualThreadId(data.thread_id);
-      try {
-        window.history.replaceState(null, '', `/agent-chat/${data.thread_id}`);
-      } catch {/* noop */}
+      // Only update threadId if we don't have one from URL (coming from home page)
+      if (!initialThreadId) {
+        setActualThreadId(data.thread_id);
+        try {
+          window.history.replaceState(null, '', `/agent-chat/${data.thread_id}`);
+        } catch {/* noop */}
+      }
       return;
     }
     if (data?.type === 'token') {
@@ -111,20 +115,27 @@ export function useAgentChat(initialThreadId: string): UseAgentChatReturn {
       return;
     }
   };
- 
-
   // Initialize connection once with an empty message to bootstrap the thread
   useEffect(() => {
+    // Prevent multiple initializations
+    if (hasInitializedRef.current) {
+      console.log('Already initialized, skipping');
+      return;
+    }
+
     const initialize = async () => {
       try {
+        hasInitializedRef.current = true;
         setIsLoading(true);
         setIsThinking(true);
 
         const abortController = new AbortController();
         abortControllerRef.current = abortController;
 
+        // Use initialThreadId if available (from URL on page load/reload)
+        // Otherwise send empty string to let API generate a new thread
         const response = await startLoanAgentStream({
-          threadId: actualThreadId,
+          threadId: initialThreadId || "",
           input: { messages: [{ role: 'user', content: [] }] },
           signal: abortController.signal
         });
@@ -144,14 +155,14 @@ export function useAgentChat(initialThreadId: string): UseAgentChatReturn {
       }
     };
 
-    if (initialThreadId) initialize();
+    initialize();
 
     return () => {
       if (abortControllerRef.current) abortControllerRef.current.abort();
       if (streamingTimeoutRef.current) clearTimeout(streamingTimeoutRef.current);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialThreadId]);
+  }, []);
 
   const sendMessage = async (text: string, fileUrls: string[] = []) => {
     const trimmed = (text || '').trim();
@@ -169,7 +180,7 @@ export function useAgentChat(initialThreadId: string): UseAgentChatReturn {
 
     try {
       const response = await startLoanAgentStream({
-        threadId: actualThreadId,
+        threadId: actualThreadId || "",
         input: {
           messages: [{
             role: 'user',
