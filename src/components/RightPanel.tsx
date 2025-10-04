@@ -1,4 +1,4 @@
-import React, { useImperativeHandle, forwardRef } from 'react'
+import React, { useImperativeHandle, forwardRef, useState } from 'react'
 import { FieldItem } from '@/service/socket';
 import { openLinkInNewTab } from '@/common/utils';
 import { useSocketData } from '@/contexts/SocketDataContext';
@@ -13,6 +13,36 @@ export interface RightPanelRef {
   resetExpandedSections: () => void;
   expandHighlightedSections: () => void;
 }
+
+// Tooltip Component
+interface TooltipProps {
+  text: string;
+  children: React.ReactNode;
+}
+
+const Tooltip: React.FC<TooltipProps> = ({ text, children }) => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  return (
+    <div 
+      className="relative inline-flex items-center cursor-pointer z-50"
+      onMouseEnter={() => setIsVisible(true)}
+      onMouseLeave={() => setIsVisible(false)}
+      onTouchStart={() => setIsVisible(true)}
+      onTouchEnd={() => setTimeout(() => setIsVisible(false), 2000)}
+    >
+      {children}
+      {isVisible && (
+        <div className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap z-50 shadow-lg">
+          {text}
+          <div className="absolute top-full right-3 -mt-1">
+            <div className="border-4 border-transparent border-t-gray-900"></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const RightPanel = forwardRef<RightPanelRef, RightPanelProps>((props, ref) => {
   // Use socket data from context
@@ -76,30 +106,38 @@ const RightPanel = forwardRef<RightPanelRef, RightPanelProps>((props, ref) => {
       
     if (verificationStatus !== undefined) {
       return verificationStatus ? (
-        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow-sm">
-          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-        </div>
+        <Tooltip text="Verified successfully">
+          <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow-sm cursor-pointer">
+            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          </div>
+        </Tooltip>
       ) : (
-        <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-sm">
-          <span className="text-white text-xs font-bold">!</span>
-        </div>
+        <Tooltip text="It's not verified">
+          <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-sm cursor-pointer">
+            <span className="text-white text-xs font-bold">!</span>
+          </div>
+        </Tooltip>
       );
     }
     
     // Show status based on value if no verification status
     if (typeof actualValue === 'boolean') {
       return actualValue ? (
-        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow-sm">
-          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-        </div>
+        <Tooltip text="Verified successfully">
+          <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow-sm cursor-pointer">
+            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          </div>
+        </Tooltip>
       ) : (
-        <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-sm">
-          <span className="text-white text-xs font-bold">!</span>
-        </div>
+        <Tooltip text="It's not verified">
+          <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-sm cursor-pointer">
+            <span className="text-white text-xs font-bold">!</span>
+          </div>
+        </Tooltip>
       );
     }
     
