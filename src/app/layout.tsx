@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lend Smart - Smart Lending Solutions",
+  title: "Frida – AI-Powered Onboarding Solution",
   description: "Intelligent lending platform powered by AI for smarter financial decisions",
 };
 
