@@ -481,7 +481,7 @@ function AgentChatContent() {
                             <p className="text-xs sm:text-sm leading-relaxed mb-2">
                               Uploaded {formatDocumentType(parsedUrls.documentType!)}
                             </p>
-                            <div className="bg-blue-400 bg-opacity-50 rounded-lg p-2">
+                            <div>
                               {renderDocumentUrls(parsedUrls)}
                             </div>
                           </>
