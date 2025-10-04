@@ -352,13 +352,13 @@ function AgentChatContent() {
       <div className="flex-1 flex max-w-7xl mx-auto w-full z-10">
         <div className="flex-1 sm:ml-1 my-0 sm:my-2 sm:mb-2 lg:my-4">
           <div 
-            className="p-0 sm:p-1 rounded-none sm:rounded-[20px] lg:rounded-[30px] h-[100dvh] sm:h-[calc(100dvh-32px)] lg:h-[calc(100vh-42px)]"
+            className="p-0 sm:p-1 rounded-none sm:rounded-[20px] lg:rounded-[30px] h-[100dvh] sm:h-[calc(100dvh-32px)] lg:h-[calc(100vh-42px)] overflow-hidden"
             style={{
               background: 'linear-gradient(180deg, #2E71FE 0%, #6AFFB6 100%)',
               boxShadow: '0px 0px 20px 0px #00000026'
             }}
           >
-            <div className="bg-gradient-to-br h-[100dvh] sm:h-[calc(100dvh-40px)] lg:h-[calc(100vh-50px)] from-green-50 via-pink-50 to-blue-50 flex flex-col relative overflow-hidden backdrop-blur-sm rounded-none sm:rounded-[16px] lg:rounded-[26px]">
+            <div className="bg-gradient-to-br h-[100vh] sm:h-[calc(100dvh-40px)] lg:h-[calc(100vh-50px)] from-green-50 via-pink-50 to-blue-50 flex flex-col relative overflow-hidden backdrop-blur-sm rounded-none sm:rounded-[16px] lg:rounded-[26px]">
               {/* Subtle inner glow */}
               <div className="absolute inset-0 bg-gradient-to-br from-green-100/30 via-pink-100/20 to-blue-100/30 rounded-lg"></div>
             
@@ -427,11 +427,11 @@ function AgentChatContent() {
                         className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full object-cover border-2 border-white shadow-sm"
                       />
                     ) : (
-                      <img 
-                        src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face&auto=format" 
-                        alt="User" 
-                        className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full object-cover border-2 border-white shadow-sm"
-                      />
+                      <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full bg-gray-300 flex items-center justify-center border-2 border-white shadow-sm">
+                        <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                      </div>
                     )}
                     <span className="hidden sm:inline text-xs md:text-sm font-semibold text-gray-800">User</span>
                   </div>
