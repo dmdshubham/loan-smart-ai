@@ -37,6 +37,13 @@ export interface ApplicantData {
   timestamp: string;
 }
 
+export interface StageData {
+  conversation_id: string;
+  completed_steps: string[];
+  total_steps: number;
+  timestamp: string;
+}
+
 export interface SocketResponse {
   conversation_id: string;
   variable_name: string;
@@ -55,6 +62,7 @@ export interface SocketEventResponse {
 export interface SocketServiceCallbacks {
   onVariablesUpdate?: (variables: ConversationVariable[]) => void;
   onApplicantDataUpdate?: (data: ApplicantData) => void;
+  onStageDataUpdate?: (data: StageData) => void;
   onError?: (error: any) => void;
   onConnect?: () => void;
   onDisconnect?: () => void;
@@ -88,12 +96,18 @@ class SocketService {
     this.socket.on('session_variables_updated', (response: any) => {
       console.log('Received session variables update:', response);
       
+      // Check if this is stage data
+      if (response.data?.stage_data) {
+        this.handleStageDataUpdate(response);
+      }
+      
       // Check if this is the new applicant details structure
-      if (response.data?.applicant_details
-      ) {
+      if (response.data?.applicant_details) {
         this.handleApplicantDataUpdate(response);
-      } else if (Array.isArray(response.data)) {
-        // Old structure - handle as before
+      }
+      
+      // Handle old structure
+      if (Array.isArray(response.data)) {
         this.handleVariablesUpdate(response as SocketEventResponse);
       }
     });
@@ -113,6 +127,18 @@ class SocketService {
     
     console.log('Parsed applicant data:', applicantData);
     this.callbacks.onApplicantDataUpdate?.(applicantData);
+  }
+
+  private handleStageDataUpdate(response: any) {
+    const stageData: StageData = {
+      conversation_id: response.conversation_id,
+      completed_steps: response.data.stage_data.completed_steps || [],
+      total_steps: response.data.stage_data.total_steps || 5,
+      timestamp: response.timestamp
+    };
+    
+    console.log('Parsed stage data:', stageData);
+    this.callbacks.onStageDataUpdate?.(stageData);
   }
 
   private handleVariablesUpdate(response: SocketEventResponse) {

@@ -1,301 +1,36 @@
-import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react'
-import { ApplicantData, Step } from './type';
-import { socketService, ConversationVariable, ApplicantData as SocketApplicantData, FieldItem } from '@/service/socket';
+import React, { useImperativeHandle, forwardRef } from 'react'
+import { FieldItem } from '@/service/socket';
 import { openLinkInNewTab } from '@/common/utils';
+import { useRightPanel } from '@/hooks/useRightPanel';
 
 interface RightPanelProps {
   conversationId?: string;
+  onSectionUpdate?: () => void;
 }
 
 export interface RightPanelRef {
   resetExpandedSections: () => void;
+  expandHighlightedSections: () => void;
 }
 
-const RightPanel = forwardRef<RightPanelRef, RightPanelProps>(({ conversationId }, ref) => {
-  const [conversationVariables, setConversationVariables] = useState<ConversationVariable[]>([]);
-  const [applicantData, setApplicantData] = useState<SocketApplicantData | null>(null);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
-  const [highlightedSections, setHighlightedSections] = useState<Set<string>>(new Set());
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
-  const [animatedFields, setAnimatedFields] = useState<Set<string>>(new Set());
+const RightPanel = forwardRef<RightPanelRef, RightPanelProps>(({ conversationId, onSectionUpdate }, ref) => {
+  // Use custom hook to manage all logic
+  const {
+    conversationVariables,
+    applicantData,
+    expandedSections,
+    highlightedSections,
+    animatedFields,
+    toggleSection,
+    resetExpandedSections,
+    expandHighlightedSections,
+  } = useRightPanel({ conversationId, onSectionUpdate });
 
-  useEffect(() => {
-    // Set up socket callbacks
-    socketService.setCallbacks({
-      onApplicantDataUpdate: (data) => {
-        console.log('Applicant data updated:', data);
-        
-        // Get the section names from the new data
-        const newSectionNames = Object.keys(data.applicant_details || {});
-        console.log('New section names:', newSectionNames);
-        
-        // Detect field value changes and new sections
-        setApplicantData((prevData) => {
-          if (prevData) {
-            console.log('Previous data exists, checking for changes...');
-            const prevSectionNames = new Set(Object.keys(prevData.applicant_details || {}));
-            console.log('Previous section names:', Array.from(prevSectionNames));
-            
-            const newSections = newSectionNames.filter(name => !prevSectionNames.has(name));
-            console.log('New sections detected:', newSections);
-            
-            const updatedSections = new Set<string>();
-            const updatedFields = new Set<string>();
-            
-            // Helper function to deep compare values
-            const deepCompareValues = (val1: any, val2: any): boolean => {
-              // Handle exact equality (including null === null, undefined === undefined)
-              if (val1 === val2) return true;
-              
-              // Handle null/undefined cases where they're not equal
-              if (val1 == null || val2 == null) return false;
-              
-              // Handle different types
-              if (typeof val1 !== typeof val2) return false;
-              
-              // Handle arrays (for documents section)
-              if (Array.isArray(val1) && Array.isArray(val2)) {
-                if (val1.length !== val2.length) return false;
-                
-                for (let i = 0; i < val1.length; i++) {
-                  const item1 = val1[i];
-                  const item2 = val2[i];
-                  
-                  // Handle nested objects with {value, isVerified}
-                  if (typeof item1 === 'object' && item1 !== null && typeof item2 === 'object' && item2 !== null) {
-                    // Deep compare the object properties
-                    if (!deepCompareValues(item1, item2)) {
-                      return false;
-                    }
-                  } else if (item1 !== item2) {
-                    return false;
-                  }
-                }
-                return true;
-              }
-              
-              // Handle objects with {value, isVerified}
-              if (typeof val1 === 'object' && typeof val2 === 'object') {
-                if ('value' in val1 && 'value' in val2) {
-                  return val1.value === val2.value && val1.isVerified === val2.isVerified;
-                }
-                return JSON.stringify(val1) === JSON.stringify(val2);
-              }
-              
-              return val1 === val2;
-            };
-
-            // Check for field value changes in existing sections
-            newSectionNames.forEach(sectionName => {
-              const currentFields = (data.applicant_details as any)?.[sectionName] || [];
-              const prevFields = (prevData.applicant_details as any)?.[sectionName] || [];
-              
-              console.log(`Checking section: ${sectionName}`);
-              console.log('Current fields:', currentFields);
-              console.log('Previous fields:', prevFields);
-              
-              // Check if any field values have changed or new fields added
-              const hasChanges = currentFields.some((currentField: FieldItem) => {
-                const prevField = prevFields.find((prev: FieldItem) => prev.key === currentField.key);
-                
-                // Field is new (not in previous data)
-                if (!prevField) {
-                  console.log(`New field detected: ${currentField.key} with value`, currentField.value);
-                  const fieldId = `${sectionName}.${currentField.key}`;
-                  updatedFields.add(fieldId);
-                  return true;
-                }
-                
-                // Field value has changed - use deep comparison
-                const hasChanged = !deepCompareValues(prevField.value, currentField.value);
-                if (hasChanged) {
-                  console.log(`Field ${currentField.key} changed:`, {
-                    from: prevField.value,
-                    to: currentField.value
-                  });
-                  const fieldId = `${sectionName}.${currentField.key}`;
-                  updatedFields.add(fieldId);
-                }
-                return hasChanged;
-              });
-              
-              if (hasChanges) {
-                console.log(`Section ${sectionName} has changes`);
-                updatedSections.add(sectionName);
-              }
-            });
-            
-            // Auto-expand and highlight only new sections or sections with changes
-            const sectionsToHighlight = [...newSections, ...updatedSections];
-            console.log('Sections to highlight:', sectionsToHighlight);
-            
-            if (sectionsToHighlight.length > 0) {
-              console.log('Expanding and highlighting sections:', sectionsToHighlight);
-              setExpandedSections(prev => {
-                const newSet = new Set(prev);
-                sectionsToHighlight.forEach(name => newSet.add(name));
-                return newSet;
-              });
-              
-              setHighlightedSections(new Set(sectionsToHighlight));
-              
-              // Remove highlight after 4 seconds
-              setTimeout(() => {
-                setHighlightedSections(new Set());
-              }, 4000);
-            } else {
-              console.log('No sections to highlight');
-            }
-            
-            // Trigger field animations for updated fields
-            if (updatedFields.size > 0) {
-              console.log('Animating updated fields:', Array.from(updatedFields));
-              setAnimatedFields(new Set(updatedFields));
-              
-              // Remove field animations after 2 seconds
-              setTimeout(() => {
-                setAnimatedFields(new Set());
-              }, 2000);
-            }
-          } else {
-            // First time receiving data - don't auto-expand any sections
-            console.log('First time receiving applicant data - no auto-expansion');
-            setIsFirstLoad(false);
-          }
-          
-          return data;
-        });
-      },
-      onVariablesUpdate: (variables) => {
-        console.log('Variables updated:', variables);
-        
-        // Detect new variables and value changes
-        setConversationVariables((prevVariables) => {
-          if (prevVariables.length === 0 || isFirstLoad) {
-            // First time receiving data - don't auto-expand any sections
-            console.log('First time receiving conversation variables - no auto-expansion');
-            return variables;
-          }
-          
-          console.log('Previous variables:', prevVariables);
-          const prevVariableNames = new Set(prevVariables.map(v => v.variable_name));
-          const newVariableNames = variables
-            .filter(v => !prevVariableNames.has(v.variable_name))
-            .map(v => v.variable_name);
-          
-          console.log('New variable names:', newVariableNames);
-          
-          const updatedVariableNames = new Set<string>();
-          const updatedVariableFields = new Set<string>();
-          
-          // Check for value changes in existing variables
-          variables.forEach(currentVar => {
-            const prevVar = prevVariables.find(prev => prev.variable_name === currentVar.variable_name);
-            if (prevVar) {
-              const hasChanged = JSON.stringify(prevVar.variable_value) !== JSON.stringify(currentVar.variable_value);
-              if (hasChanged) {
-                console.log(`Variable ${currentVar.variable_name} changed:`, {
-                  from: prevVar.variable_value,
-                  to: currentVar.variable_value
-                });
-                updatedVariableNames.add(currentVar.variable_name);
-                
-                // Track individual field changes within the variable
-                Object.keys(currentVar.variable_value).forEach(fieldKey => {
-                  const fieldId = `${currentVar.variable_name}.${fieldKey}`;
-                  updatedVariableFields.add(fieldId);
-                });
-              }
-            }
-          });
-          
-          // Auto-expand and highlight only new variables or variables with value changes
-          const variablesToHighlight = [...newVariableNames, ...updatedVariableNames];
-          console.log('Variables to highlight:', variablesToHighlight);
-          
-          if (variablesToHighlight.length > 0) {
-            console.log('Expanding and highlighting variables:', variablesToHighlight);
-            setExpandedSections(prev => {
-              const newSet = new Set(prev);
-              variablesToHighlight.forEach(name => newSet.add(name)); 
-              return newSet;
-            });
-            
-            setHighlightedSections(new Set(variablesToHighlight));
-            
-            // Remove highlight after 4 seconds
-            setTimeout(() => {
-              setHighlightedSections(new Set());
-            }, 4000);
-          } else {
-            console.log('No variables to highlight');
-          }
-          
-          // Trigger field animations for updated variable fields
-          if (updatedVariableFields.size > 0) {
-            console.log('Animating updated variable fields:', Array.from(updatedVariableFields));
-            setAnimatedFields(prev => {
-              const newSet = new Set(prev);
-              updatedVariableFields.forEach(fieldId => newSet.add(fieldId));
-              return newSet;
-            });
-            
-            // Remove field animations after 2 seconds
-            setTimeout(() => {
-              setAnimatedFields(prev => {
-                const newSet = new Set(prev);
-                updatedVariableFields.forEach(fieldId => newSet.delete(fieldId));
-                return newSet;
-              });
-            }, 2000);
-          }
-          
-          return variables;
-        });
-      },
-      onError: (error) => {
-        console.error('Socket error:', error);
-      },
-      onConnect: () => {
-        console.log('Socket connected');
-      },
-      onDisconnect: () => {
-        console.log('Socket disconnected');
-      }
-    });
-
-    // Join conversation when conversationId is available
-    if (conversationId) {
-      socketService.joinConversation(conversationId);
-    }
-
-    return () => {
-      if (conversationId) {
-        socketService.leaveConversation();
-      }
-    };
-  }, [conversationId]);
-
-  const resetExpandedSections = () => {
-    setExpandedSections(new Set([]));
-  }
-
-  // Expose resetExpandedSections to parent component via ref
+  // Expose methods to parent component via ref
   useImperativeHandle(ref, () => ({
-    resetExpandedSections
+    resetExpandedSections,
+    expandHighlightedSections
   }));
-
-  const toggleSection = (sectionName: string) => {
-    setExpandedSections(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(sectionName)) {
-        newSet.delete(sectionName);
-      } else {
-        newSet.add(sectionName);
-      }
-      return newSet;
-    });
-  };
 
   const formatVariableName = (name: string): string => {
     return name

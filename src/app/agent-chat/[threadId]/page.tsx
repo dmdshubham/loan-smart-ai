@@ -9,6 +9,7 @@ import DocumentUploadInline from '@/components/DocumentUploadInline';
 import { speechRecognitionService } from '@/service/speechRecognition';
 import { openLinkInNewTab, processBotMessageHTML } from '@/common/utils';
 import { parseDocumentUrls, formatDocumentType, detectDocumentUploadRequest, formatApiMessage } from '@/utils/document-detector';
+import { useRightPanel } from '@/hooks/useRightPanel';
 
 
 
@@ -23,9 +24,11 @@ export default function AgentChatPage() {
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const rightPanelRef = useRef<RightPanelRef>(null);
+  const bottomSheetRightPanelRef = useRef<RightPanelRef>(null);
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
-console.log("isUploadingDoc",isUploadingDoc);
+  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
+  const [isButtonAnimating, setIsButtonAnimating] = useState(false);
   const {
     actualThreadId,
     messages,
@@ -36,7 +39,28 @@ console.log("isUploadingDoc",isUploadingDoc);
     currentStreamingMessage,
     sendMessage,
   } = useAgentChat(initialThreadId);
+
+  const handleSectionUpdate = useCallback(() => {
+    // Animate the floating button for 3 seconds
+    console.log("handleSectionUpdate");
+    setIsButtonAnimating(true);
+    setTimeout(() => {
+      setIsButtonAnimating(false);
+    }, 3000);
+  }, []);
   
+
+  const {
+    conversationVariables,
+    applicantData,
+    stageData,
+    expandedSections,
+    highlightedSections,
+    animatedFields,
+    toggleSection,
+    resetExpandedSections,
+    expandHighlightedSections,
+  } = useRightPanel({ conversationId: actualThreadId, onSectionUpdate: handleSectionUpdate });
 
   // Load user photo from localStorage and listen for updates
   useEffect(() => {
@@ -200,6 +224,8 @@ console.log("isUploadingDoc",isUploadingDoc);
     setUploadedUrls(urls);
   }, []);
 
+
+
   const handleTextareaKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -322,20 +348,18 @@ console.log("isUploadingDoc",isUploadingDoc);
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col relative">
-      {/* Background Overlay */}
-
+    <div className="min-h-screen bg-gray-50 flex flex-col relative overflow-hidden">
       {/* Main Content */}
       <div className="flex-1 flex max-w-7xl mx-auto w-full z-10">
-        <div className="flex-1 my-0 md:my-2 lg:my-4">
+        <div className="flex-1 sm:ml-1 my-0 sm:my-2 sm:mb-2 lg:my-4">
           <div 
-            className="p-0 md:p-1 rounded-none md:rounded-[20px] lg:rounded-[30px] h-screen md:h-[calc(100vh-16px)] lg:h-[calc(100vh-42px)]"
+            className="p-0 sm:p-1 rounded-none sm:rounded-[20px] lg:rounded-[30px] h-[100dvh] sm:h-[calc(100dvh-32px)] lg:h-[calc(100vh-42px)]"
             style={{
               background: 'linear-gradient(180deg, #2E71FE 0%, #6AFFB6 100%)',
               boxShadow: '0px 0px 20px 0px #00000026'
             }}
           >
-            <div className="bg-gradient-to-br h-screen md:h-[calc(100vh-24px)] lg:h-[calc(100vh-50px)] from-green-50 via-pink-50 to-blue-50 flex flex-col relative overflow-hidden backdrop-blur-sm rounded-none md:rounded-[16px] lg:rounded-[26px]">
+            <div className="bg-gradient-to-br h-[100dvh] sm:h-[calc(100dvh-40px)] lg:h-[calc(100vh-50px)] from-green-50 via-pink-50 to-blue-50 flex flex-col relative overflow-hidden backdrop-blur-sm rounded-none sm:rounded-[16px] lg:rounded-[26px]">
               {/* Subtle inner glow */}
               <div className="absolute inset-0 bg-gradient-to-br from-green-100/30 via-pink-100/20 to-blue-100/30 rounded-lg"></div>
             
@@ -354,34 +378,46 @@ console.log("isUploadingDoc",isUploadingDoc);
                       <span className="text-blue-600">FIN</span>
                       <span className="text-green-500">.AI</span>
                     </h1>
-                    
-                   
                   </div>
                   
                   {/* User profile */}
                   <div className="flex items-center space-x-1 sm:space-x-2">
 
+                  {/* Desktop progress indicator */}
                   <div className="hidden sm:flex items-center space-x-3 mr-3">
-                      <span className="text-sm font-bold text-gray-800">1/5</span>
+                      <span className="text-sm font-bold text-gray-800">
+                        {stageData?.completed_steps.length || 0}/{stageData?.total_steps || 5}
+                      </span>
                       <div className="flex space-x-1">
-                        <div className="w-1 h-5 bg-green-500 rounded-full shadow-sm"></div>
-                        <div className="w-1 h-5 bg-gray-300 rounded-full"></div>
-                        <div className="w-1 h-5 bg-gray-300 rounded-full"></div>
-                        <div className="w-1 h-5 bg-gray-300 rounded-full"></div>
-                        <div className="w-1 h-5 bg-gray-300 rounded-full"></div>
+                        {Array.from({ length: stageData?.total_steps || 5 }).map((_, index) => (
+                          <div 
+                            key={index}
+                            className={`w-1 h-5 rounded-full shadow-sm ${
+                              index < (stageData?.completed_steps.length || 0)
+                                ? 'bg-green-500'
+                                : 'bg-gray-300'
+                            }`}
+                          />
+                        ))}
                       </div>
                     </div>
                     
-                    {/* Compact progress for tablet */}
+                    {/* Mobile/Compact progress indicator */}
                     <div className="flex sm:hidden items-center space-x-2 mr-3">
-                      <span className="text-xs font-bold text-gray-800">1/5</span>
+                      <span className="text-xs font-bold text-gray-800">
+                        {stageData?.completed_steps.length || 0}/{stageData?.total_steps || 5}
+                      </span>
                       <div className="flex space-x-0.5">
-                        <div className="w-1 h-4 bg-green-500 rounded-full"></div>
-                        <div className="w-1 h-4 bg-gray-300 rounded-full"></div>
-                        <div className="w-1 h-4 bg-gray-300 rounded-full"></div>
-                        <div className="w-1 h-4 bg-gray-300 rounded-full"></div>
-                        <div className="w-1 h-4 bg-gray-300 rounded-full"></div>
-                       
+                        {Array.from({ length: stageData?.total_steps || 5 }).map((_, index) => (
+                          <div 
+                            key={index}
+                            className={`w-1 h-4 rounded-full ${
+                              index < (stageData?.completed_steps.length || 0)
+                                ? 'bg-green-500'
+                                : 'bg-gray-300'
+                            }`}
+                          />
+                        ))}
                       </div>
                     </div>
 
@@ -404,7 +440,7 @@ console.log("isUploadingDoc",isUploadingDoc);
               </div>
             
             {/* Messages Area */}
-            <div className="relative flex-1 px-3 sm:px-4 md:px-6 py-4 md:py-6 overflow-y-auto space-y-3 md:space-y-4">
+            <div className="relative flex-1 px-3 sm:px-4 md:px-6 py-4 md:py-6 overflow-y-auto overflow-x-hidden space-y-3 md:space-y-4" style={{ maxHeight: 'calc(100% - 200px)' }}>
               {messages.map((message, index) => {
                 // Parse document URLs from message text
                 const parsedUrls = parseDocumentUrls(message.text);
@@ -504,7 +540,7 @@ console.log("isUploadingDoc",isUploadingDoc);
             </div>
 
             {/* Bottom Bar with Siri-style interface */}
-            <div className="relative px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-6">
+            <div className="relative px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-8">
               <div className="flex items-center justify-between">
                 {/* Keyboard Icon - hide on mobile */}
                 <button className="hidden sm:block p-2 md:p-3 text-gray-400 hover:text-gray-600 transition-colors">
@@ -580,7 +616,8 @@ console.log("isUploadingDoc",isUploadingDoc);
                 <div className="sm:hidden w-8"></div>
               </div>
               
-              <div className="text-center mt-1.5 sm:mt-2">
+              {/* "Speak your answers" text - Hidden on mobile (icon in input box instead), shown on tablet+ */}
+              <div className="hidden sm:block text-center mt-1.5 sm:mt-2">
                 {isSpeechSupported ? (
                   <p className="text-gray-500 text-xs sm:text-sm font-medium">Speak your answers</p>
                 ) : (
@@ -592,7 +629,7 @@ console.log("isUploadingDoc",isUploadingDoc);
 
               {/* Text Input Area */}
               <div className="mt-3 sm:mt-4">
-                <div className="flex items-center space-x-2 sm:space-x-3 bg-white rounded-full border border-gray-200 px-3 sm:px-4 py-2 shadow-sm">
+                <div className="flex items-center space-x-2 bg-white rounded-full border border-gray-200 px-3 sm:px-4 py-2 shadow-sm">
                   {/* <FileUpload 
                     onFileUploaded={handleFileUploaded}
                     onError={handleFileUploadError}
@@ -605,9 +642,28 @@ console.log("isUploadingDoc",isUploadingDoc);
                     placeholder="Type your message here..."
                     className="flex-1 outline-none text-xs sm:text-sm text-gray-700 placeholder-gray-400"
                   />
+                  
+                  {/* Microphone icon - Shown only on mobile, beside send button */}
+                  <button
+                    onClick={toggleListening}
+                    disabled={!isSpeechSupported}
+                    className={`sm:hidden p-1 transition-colors flex-shrink-0 ${
+                      !isSpeechSupported 
+                        ? 'text-gray-300 cursor-not-allowed' 
+                        : isListening 
+                          ? 'text-purple-500' 
+                          : 'text-gray-500 hover:text-purple-600'
+                    }`}
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                      <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                    </svg>
+                  </button>
+                  
                   <button
                     onClick={handleSendMessage}
-                    className="p-1 text-blue-500 hover:text-blue-600 transition-colors"
+                    className="p-1 text-blue-500 hover:text-blue-600 transition-colors flex-shrink-0"
                   >
                     <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
@@ -629,11 +685,118 @@ console.log("isUploadingDoc",isUploadingDoc);
 
         {/* Right Panel - Hide on mobile, show on tablet and desktop */}
         <div className="hidden sm:block">
-          <RightPanel ref={rightPanelRef} conversationId={actualThreadId} />
+          <RightPanel ref={rightPanelRef} conversationId={actualThreadId} onSectionUpdate={handleSectionUpdate} />
         </div>
-
-        
       </div>
+
+      {/* Floating Button - Show only on mobile */}
+      <button
+        onClick={() => {
+          setIsBottomSheetOpen(true);
+          // Expand highlighted sections when opening bottom sheet
+          setTimeout(() => {
+            bottomSheetRightPanelRef.current?.expandHighlightedSections();
+          }, 100);
+        }}
+        className={`sm:hidden fixed bottom-24 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg flex items-center justify-center text-white transition-all duration-300 ${
+          isButtonAnimating ? 'animate-bounce scale-110' : 'scale-100'
+        }`}
+        style={{
+          boxShadow: isButtonAnimating 
+            ? '0 0 30px rgba(59, 130, 246, 0.6), 0 8px 16px rgba(0, 0, 0, 0.2)' 
+            : '0 4px 12px rgba(0, 0, 0, 0.15)'
+        }}
+      >
+        {/* Icon - Document/Info icon */}
+        <svg 
+          className={`w-6 h-6 transition-transform duration-300 ${isButtonAnimating ? 'rotate-12' : ''}`} 
+          fill="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11zm-1-7H7v-2h10v2zm0 4H7v-2h10v2z"/>
+        </svg>
+        
+        {/* Notification Badge */}
+        {isButtonAnimating && (
+          <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
+            <div className="w-2 h-2 bg-white rounded-full"></div>
+          </div>
+        )}
+        
+        {/* Pulse ring animation when active */}
+        {isButtonAnimating && (
+          <>
+            <div className="absolute inset-0 rounded-full bg-blue-400 animate-ping opacity-75"></div>
+            <div className="absolute inset-0 rounded-full bg-purple-400 animate-pulse opacity-50"></div>
+          </>
+        )}
+      </button>
+
+      {/* Bottom Sheet Modal Overlay - Only show when open */}
+      {isBottomSheetOpen && (
+        <div className="sm:hidden fixed inset-0 z-50 flex items-end animate-fade-in">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-transparent backdrop-blur-sm bg-opacity-10 transition-opacity"
+            onClick={() => setIsBottomSheetOpen(false)}
+          ></div>
+          
+          {/* Bottom Sheet */}
+          <div 
+            className="relative w-full bg-white rounded-t-3xl shadow-2xl overflow-hidden animate-slide-up"
+            style={{ maxHeight: '85vh' }}
+          >
+            {/* Handle bar */}
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+            </div>
+            
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-3 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-800">Application Details</h2>
+              <button 
+                onClick={() => setIsBottomSheetOpen(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Content - RightPanel */}
+            <div className="overflow-y-auto" style={{ maxHeight: 'calc(85vh - 80px)' }}>
+              <RightPanel ref={bottomSheetRightPanelRef} conversationId={actualThreadId} onSectionUpdate={handleSectionUpdate} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add keyframe animation for slide up */}
+      <style jsx>{`
+        @keyframes slide-up {
+          from {
+            transform: translateY(100%);
+          }
+          to {
+            transform: translateY(0);
+          }
+        }
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out;
+        }
+        .animate-fade-in {
+          animation: fade-in 0.2s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
