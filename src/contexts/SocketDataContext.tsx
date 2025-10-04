@@ -113,41 +113,43 @@ export const SocketDataProvider: React.FC<SocketDataProviderProps> = ({
           console.log('Current fields:', currentFields);
           console.log('Previous fields:', prevFields);
           
-          // Check if any field values have changed or new fields added
-          const hasChanges = currentFields.some((currentField: FieldItem) => {
+          // Check all fields for changes (value, isVerified, or new fields)
+          currentFields.forEach((currentField: FieldItem) => {
             const prevField = prevFields.find((prev: FieldItem) => prev.key === currentField.key);
+            const fieldId = `${sectionName}.${currentField.key}`;
             
             // Field is new (not in previous data)
             if (!prevField) {
               console.log(`New field detected: ${currentField.key} with value`, currentField.value);
-              const fieldId = `${sectionName}.${currentField.key}`;
               updatedFields.add(fieldId);
-              return true;
+              updatedSections.add(sectionName);
+              return;
             }
             
-            // Field value has changed - use deep comparison
-            const hasChanged = !deepCompareValues(prevField.value, currentField.value);
-            if (hasChanged) {
+            // Check if value has changed (using deep comparison)
+            const valueChanged = !deepCompareValues(prevField.value, currentField.value);
+            
+            // Check if isVerified status has changed
+            const isVerifiedChanged = prevField.isVerified !== currentField.isVerified;
+            
+            // If either value or isVerified changed, mark the field as updated
+            if (valueChanged || isVerifiedChanged) {
               console.log(`Field ${currentField.key} changed:`, {
-                from: prevField.value,
-                to: currentField.value
+                valueChanged,
+                isVerifiedChanged,
+                from: { value: prevField.value, isVerified: prevField.isVerified },
+                to: { value: currentField.value, isVerified: currentField.isVerified }
               });
-              const fieldId = `${sectionName}.${currentField.key}`;
               updatedFields.add(fieldId);
-              setSectionUpdateTrigger(prev => prev + 1);
+              updatedSections.add(sectionName);
             }
-            return hasChanged;
           });
-          
-          if (hasChanges) {
-            console.log(`Section ${sectionName} has changes`);
-            updatedSections.add(sectionName);
-          }
         });
         
         // Auto-expand and highlight only new sections or sections with changes
         const sectionsToHighlight = [...newSections, ...updatedSections];
         console.log('Sections to highlight:', sectionsToHighlight);
+        console.log('All updated fields:', Array.from(updatedFields));
         
         if (sectionsToHighlight.length > 0) {
           console.log('Expanding and highlighting sections:', sectionsToHighlight);
@@ -173,11 +175,15 @@ export const SocketDataProvider: React.FC<SocketDataProviderProps> = ({
           console.log('No sections to highlight');
         }
         
-        // Trigger field animations for updated fields
+        // Trigger field animations for ALL updated fields (including isVerified changes)
         if (updatedFields.size > 0) {
-          console.log('Animating updated fields:', Array.from(updatedFields));
+          console.log('Animating all updated fields (value or isVerified changes):', Array.from(updatedFields));
           setAnimatedFields(new Set(updatedFields));
-          setSectionUpdateTrigger(prev => prev + 1);
+          
+          // Always trigger section update when fields are updated
+          if (sectionsToHighlight.length === 0) {
+            setSectionUpdateTrigger(prev => prev + 1);
+          }
           
           // Remove field animations after 2 seconds
           setTimeout(() => {
