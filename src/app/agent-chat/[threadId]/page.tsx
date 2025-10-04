@@ -9,11 +9,12 @@ import DocumentUploadInline from '@/components/DocumentUploadInline';
 import { speechRecognitionService } from '@/service/speechRecognition';
 import { openLinkInNewTab, processBotMessageHTML } from '@/common/utils';
 import { parseDocumentUrls, formatDocumentType, detectDocumentUploadRequest, formatApiMessage } from '@/utils/document-detector';
-import { useRightPanel } from '@/hooks/useRightPanel';
+import { SocketDataProvider, useSocketData } from '@/contexts/SocketDataContext';
 
 
 
-export default function AgentChatPage() {
+// Inner component that uses the socket data context
+function AgentChatContent() {
   const params = useParams();
   const initialThreadId = params.threadId as string;
   const [isListening, setIsListening] = useState(false);
@@ -29,6 +30,7 @@ export default function AgentChatPage() {
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [isButtonAnimating, setIsButtonAnimating] = useState(false);
+  
   const {
     actualThreadId,
     messages,
@@ -40,27 +42,24 @@ export default function AgentChatPage() {
     sendMessage,
   } = useAgentChat(initialThreadId);
 
-  const handleSectionUpdate = useCallback(() => {
-    // Animate the floating button for 3 seconds
-    console.log("handleSectionUpdate");
-    setIsButtonAnimating(true);
-    setTimeout(() => {
-      setIsButtonAnimating(false);
-    }, 3000);
-  }, []);
-  
-
+  // Use socket data from context
   const {
-    conversationVariables,
-    applicantData,
     stageData,
-    expandedSections,
-    highlightedSections,
-    animatedFields,
-    toggleSection,
-    resetExpandedSections,
     expandHighlightedSections,
-  } = useRightPanel({ conversationId: actualThreadId, onSectionUpdate: handleSectionUpdate });
+    sectionUpdateCounter,
+  } = useSocketData();
+
+  // Watch for section updates and animate the floating button
+  useEffect(() => {
+    if (sectionUpdateCounter > 0) {
+      console.log("Section updated, animating button");
+      setIsButtonAnimating(true);
+      const timeout = setTimeout(() => {
+        setIsButtonAnimating(false);
+      }, 3000);
+      return () => clearTimeout(timeout);
+    }
+  }, [sectionUpdateCounter]);
 
   // Load user photo from localStorage and listen for updates
   useEffect(() => {
@@ -685,7 +684,7 @@ export default function AgentChatPage() {
 
         {/* Right Panel - Hide on mobile, show on tablet and desktop */}
         <div className="hidden sm:block">
-          <RightPanel ref={rightPanelRef} conversationId={actualThreadId} onSectionUpdate={handleSectionUpdate} />
+          <RightPanel ref={rightPanelRef} />
         </div>
       </div>
 
@@ -766,7 +765,7 @@ export default function AgentChatPage() {
             
             {/* Content - RightPanel */}
             <div className="overflow-y-auto" style={{ maxHeight: 'calc(85vh - 80px)' }}>
-              <RightPanel ref={bottomSheetRightPanelRef} conversationId={actualThreadId} onSectionUpdate={handleSectionUpdate} />
+              <RightPanel ref={bottomSheetRightPanelRef} />
             </div>
           </div>
         </div>
@@ -798,5 +797,18 @@ export default function AgentChatPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+// Wrapper component that provides the socket data context
+export default function AgentChatPage() {
+  const params = useParams();
+  const initialThreadId = params.threadId as string;
+  const { actualThreadId } = useAgentChat(initialThreadId);
+
+  return (
+    <SocketDataProvider conversationId={actualThreadId}>
+      <AgentChatContent />
+    </SocketDataProvider>
   );
 }

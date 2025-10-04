@@ -1,9 +1,10 @@
 import React, { useImperativeHandle, forwardRef } from 'react'
 import { FieldItem } from '@/service/socket';
 import { openLinkInNewTab } from '@/common/utils';
-import { useRightPanel } from '@/hooks/useRightPanel';
+import { useSocketData } from '@/contexts/SocketDataContext';
 
 interface RightPanelProps {
+  // Props kept for backward compatibility but not used
   conversationId?: string;
   onSectionUpdate?: () => void;
 }
@@ -13,8 +14,8 @@ export interface RightPanelRef {
   expandHighlightedSections: () => void;
 }
 
-const RightPanel = forwardRef<RightPanelRef, RightPanelProps>(({ conversationId, onSectionUpdate }, ref) => {
-  // Use custom hook to manage all logic
+const RightPanel = forwardRef<RightPanelRef, RightPanelProps>((props, ref) => {
+  // Use socket data from context
   const {
     conversationVariables,
     applicantData,
@@ -24,7 +25,7 @@ const RightPanel = forwardRef<RightPanelRef, RightPanelProps>(({ conversationId,
     toggleSection,
     resetExpandedSections,
     expandHighlightedSections,
-  } = useRightPanel({ conversationId, onSectionUpdate });
+  } = useSocketData();
 
   // Expose methods to parent component via ref
   useImperativeHandle(ref, () => ({
