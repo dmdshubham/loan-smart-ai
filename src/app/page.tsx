@@ -75,7 +75,7 @@ export default function ChatPage() {
             <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-0">
               <div className="flex flex-col items-center gap-2 w-full sm:w-[20%]">
                 <img src="/images/freda.png" alt="Frida" className="w-[100px] h-[100px] sm:w-[150px] sm:h-[150px]" />
-                <p className="text-gray-800 text-base sm:text-lg text-center leading-relaxed">
+                <p className="text-gray-800 text-base sm:text-lg text-center font-extrabold leading-relaxed">
                 Frida
                 </p>
                 {/* <p className="text-gray-800 text-center font-italic text-xs sm:text-sm leading-relaxed">
@@ -85,10 +85,10 @@ export default function ChatPage() {
               <div className="w-full sm:w-[80%]">
                 <div className="rounded-2xl px-4 sm:px-6 py-3 sm:py-4">
                   <p className="text-gray-800 text-base sm:text-xl font-extrabold leading-snug sm:leading-relaxed">
-                  Welcome to ABC Financial Services! Let's kickstart your loan
+                  Welcome to ABC Financial Services! <span className="font-normal ">Let's kickstart your loan
                   application with Frida, our AI-powered digital loan
                   assistant, and experience a swift and effortless process
-                  built to accelerate your business ambitions.
+                  built to accelerate your business ambitions. </span>
                   </p>
                 </div>
               </div>

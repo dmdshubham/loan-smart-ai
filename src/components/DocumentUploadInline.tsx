@@ -28,6 +28,7 @@ export default function DocumentUploadInline({
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [showPhotoUI, setShowPhotoUI] = useState(true);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -132,14 +133,26 @@ export default function DocumentUploadInline({
     setUploadedFiles(prev => prev.filter((_, idx) => idx !== index));
   };
 
-  const openCamera = async () => {
+  const openCamera = async (newFacingMode?: 'user' | 'environment') => {
     try {
+      // Stop existing stream if any
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+
+      // Use provided facingMode or current state
+      const currentFacingMode = newFacingMode || facingMode;
+      
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user' }, // 'user' for front camera (selfie)
+        video: { facingMode: currentFacingMode },
         audio: false 
       });
+      
       setStream(mediaStream);
       setIsCameraOpen(true);
+      if (newFacingMode) {
+        setFacingMode(newFacingMode);
+      }
       
       // Set video stream once the video element is ready
       if (videoRef.current) {
@@ -149,6 +162,11 @@ export default function DocumentUploadInline({
       console.error('Error accessing camera:', error);
       alert('Unable to access camera. Please check permissions.');
     }
+  };
+
+  const switchCamera = () => {
+    const newFacingMode = facingMode === 'user' ? 'environment' : 'user';
+    openCamera(newFacingMode);
   };
 
   const closeCamera = () => {
@@ -324,7 +342,7 @@ export default function DocumentUploadInline({
 
       {(documentType === 'Photo' || true) && (
         <button
-            onClick={openCamera}
+            onClick={() => openCamera()}
             className="w-1/2 mb-2 flex flex-col items-center justify-center border-2 border-dashed border-green-300 rounded-lg p-3 hover:border-green-400 hover:bg-green-50 transition-colors"
           >
             <svg className="w-5 h-5 text-green-400 mb-1" fill="currentColor" viewBox="0 0 24 24">
@@ -394,6 +412,15 @@ export default function DocumentUploadInline({
                 className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Cancel
+              </button>
+              <button
+                onClick={switchCamera}
+                className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                title={facingMode === 'user' ? 'Switch to back camera' : 'Switch to front camera'}
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20 4h-3.17L15 2H9L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 11.5V13H9v2.5L5.5 12 9 8.5V11h6V8.5l3.5 3.5-3.5 3.5z"/>
+                </svg>
               </button>
               <button
                 onClick={capturePhoto}

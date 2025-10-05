@@ -442,8 +442,10 @@ function AgentChatContent() {
                 
                 // Detect document upload request for bot messages
                 const uploadRequest = message.isBot ? detectDocumentUploadRequest(message.text) : null;
+                console.log('uploadRequest', uploadRequest);
                 const showUploadUI = uploadRequest?.isUploadRequest && !hasDocumentUrls && index === messages.length - 1;
 
+                console.log('uploadRequest', uploadRequest,showUploadUI);
                 return (
                   <div key={`message-${message.id}-${index}`} className={`flex ${message.isBot ? 'justify-start' : 'justify-end'}`}>
                     {message.isBot ? (

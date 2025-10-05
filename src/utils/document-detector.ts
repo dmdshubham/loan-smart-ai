@@ -146,10 +146,11 @@ export function formatDocumentType(type: string): string {
 export function detectDocumentUploadRequest(message: string): DocumentUploadRequest {
   const normalizedMessage = message.toLowerCase()
   
-  // Check for upload-related keywords
+  // Check for upload-related keywords but exclude messages with "successfully"
+  const hasSuccessfully = /successfully|success/i.test(message)
   const hasUploadKeywords = /upload|attach|send|provide|share|submit/i.test(message)
   
-  if (!hasUploadKeywords) {
+  if (!hasUploadKeywords || hasSuccessfully) {
     return {
       documentType: '',
       isUploadRequest: false
@@ -178,7 +179,6 @@ export function detectDocumentUploadRequest(message: string): DocumentUploadRequ
       type: 'Photo',
       sides: ['']
     },
-    
   ]
 
   // Find the most specific match by checking patterns in order of specificity
