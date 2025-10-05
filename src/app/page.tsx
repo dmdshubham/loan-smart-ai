@@ -67,7 +67,7 @@ export default function ChatPage() {
       />
           <div className="bg-white rounded-2xl p-0">
 
-          <img src="/icons/miFin-blk.png" alt="Frida" className="  m-auto w-[200px] h-[40px]  sm:w-[150px] sm:h-[70px]" />
+          <img src="/icons/myfinai.jpeg"alt="Frida" className="  m-auto w-[200px] h-[40px]  sm:w-[150px] sm:h-[70px]" />
           </div>
 
           {/* Messages Area */} 
@@ -85,7 +85,7 @@ export default function ChatPage() {
               <div className="w-full sm:w-[80%]">
                 <div className="rounded-2xl px-4 sm:px-6 py-3 sm:py-4">
                   <p className="text-gray-800 text-base sm:text-xl font-extrabold leading-snug sm:leading-relaxed">
-                  Welcome to Q-Fin Services! Let's kickstart your loan
+                  Welcome to ABC Financial Services! Let's kickstart your loan
                   application with Frida, our AI-powered digital loan
                   assistant, and experience a swift and effortless process
                   built to accelerate your business ambitions.

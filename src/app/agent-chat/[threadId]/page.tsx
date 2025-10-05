@@ -368,7 +368,7 @@ function AgentChatContent() {
                   {/* Center - miFIN.AI branding */}
                   <div className="flex items-center justify-center flex-shrink-0">
                     <img 
-                      src="/icons/miFin-blk.png" 
+                      src="/icons/myfinai.jpeg" 
                       alt="miFin" 
                       className="h-6 w-auto xs:h-8 sm:h-10 md:h-12 object-contain" 
                     />
