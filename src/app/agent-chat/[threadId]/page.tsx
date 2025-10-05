@@ -284,7 +284,7 @@ function AgentChatContent() {
                   <img 
                     src={field.url} 
                     alt={`${label}`}
-                    className="w-full h-16 sm:h-20 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition-opacity"
+                    className="h-16 sm:h-20 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition-opacity"
                   />
                 )}
                 {/* Label badge */}
@@ -434,7 +434,7 @@ function AgentChatContent() {
               </div>
             
             {/* Messages Area */}
-            <div className="relative flex-1 px-3 sm:px-4 md:px-6 py-4 md:py-6 overflow-y-auto overflow-x-hidden space-y-3 md:space-y-4" style={{ maxHeight: 'calc(100% - 200px)' }}>
+            <div  className="relative  flex-1 px-3 sm:px-4 md:px-6 py-4 md:py-6 overflow-y-auto overflow-x-hidden space-y-3 md:space-y-4">
               {messages.map((message, index) => {
                 // Parse document URLs from message text
                 const parsedUrls = parseDocumentUrls(message.text);
@@ -483,7 +483,7 @@ function AgentChatContent() {
                             </div>
                           </>
                         ) : (
-                          <p className="text-xs sm:text-sm leading-relaxed">
+                          <p className="text-sm sm:text-sm leading-relaxed">
                             {message.text}
                           </p>
                         )}
@@ -499,7 +499,7 @@ function AgentChatContent() {
                 const hasDocumentUrls = parsedUrls.documentType !== null && parsedUrls.urls.length > 0;
                 
                 return (
-                  <div key="streaming-message" className="flex justify-start">
+                  <div  key="streaming-message" className="flex justify-start">
                     <div className="bg-white rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 max-w-[85%] sm:max-w-md shadow-sm border border-gray-100 bg-opacity-90">
                       {!hasDocumentUrls && (
                         <div 

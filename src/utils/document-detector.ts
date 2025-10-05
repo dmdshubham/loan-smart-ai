@@ -150,7 +150,7 @@ export function detectDocumentUploadRequest(message: string): DocumentUploadRequ
   const hasSuccessfully = /pan|adhar|aadhar|aadhaar/i.test(message)
   const hasUploadKeywords = /upload|attach|send|provide|share|submit/i.test(message)
   
-  if (!hasUploadKeywords || hasSuccessfully) {
+  if (!hasUploadKeywords|| hasSuccessfully) {
     return {
       documentType: '',
       isUploadRequest: false
