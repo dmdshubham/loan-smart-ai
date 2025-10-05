@@ -99,18 +99,11 @@ export default function ChatPage() {
             {/* Voice Interface with animation */}
             <div 
               onClick={toggleListening}
-              className={`mic ${isListening ? 'listening' : ''} cursor-pointer`}
+              className={`mic home-mic ${isListening ? 'listening' : ''} cursor-pointer`}
               style={{ width: '80px', height: '80px' }}
             >
               <img src="/icons/voice.svg" alt="Voice mic" className="mic-img" />
               <div className="pulse-ring" aria-hidden="true"></div>
-              <div className="eq" aria-hidden="true">
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
             </div>
 
             <p className="text-gray-500 text-xs font-normal">

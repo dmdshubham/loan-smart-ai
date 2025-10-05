@@ -552,13 +552,6 @@ function AgentChatContent() {
                 >
                   <img src="/icons/voice.svg" alt="Voice mic" className="mic-img" />
                   <div className="pulse-ring" aria-hidden="true"></div>
-                  <div className="eq" aria-hidden="true">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </div>
                 </div>
 
                 {/* <button className="hidden sm:block p-2 md:p-3 text-gray-400 hover:text-gray-600 transition-colors">

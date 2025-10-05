@@ -288,12 +288,14 @@ body {
   100% { height: 22%; transform: scaleY(0.65); }
 }
 
-.mic.listening .mic-img {
+.mic.listening .mic-img,
+.home-mic:hover .mic-img {
   transform: scale(1.06) translateY(-2px);
   filter: drop-shadow(0 12px 26px rgba(0,140,240,0.12)) saturate(1.05);
 }
 
-.mic.listening .pulse-ring {
+.mic.listening .pulse-ring,
+.home-mic:hover .pulse-ring {
   opacity: 1;
   transform: translate(-50%,-50%) scale(1.12);
   animation: ringPulse 1200ms ease-out infinite;
