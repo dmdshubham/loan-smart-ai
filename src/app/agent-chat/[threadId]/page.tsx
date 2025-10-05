@@ -370,7 +370,7 @@ function AgentChatContent() {
                     <img 
                       src="/icons/myfinai.jpeg" 
                       alt="miFin" 
-                      className="h-6 w-auto xs:h-8 sm:h-10 md:h-12 object-contain" 
+                      className="h-6 w-auto sm:h-10 md:h-12 object-contain" 
                     />
                   </div>
                   
@@ -537,85 +537,44 @@ function AgentChatContent() {
 
             {/* Bottom Bar with Siri-style interface */}
             <div className="relative px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-8">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-center">
                 {/* Keyboard Icon - hide on mobile */}
-                <button className="hidden sm:block p-2 md:p-3 text-gray-400 hover:text-gray-600 transition-colors">
+                {/* <button className="hidden sm:block p-2 md:p-3 text-gray-400 hover:text-gray-600 transition-colors">
                   <svg className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M20 5H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-9 3h2v2h-2V8zm0 3h2v2h-2v-2zM8 8h2v2H8V8zm0 3h2v2H8v-2zm-1 2H5v-2h2v2zm0-3H5V8h2v2zm9 7H8v-2h8v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z"/>
                   </svg>
-                </button>
+                </button> */}
 
-                {/* Spacer for mobile centering */}
-                <div className="sm:hidden w-8"></div>
-
-                {/* Siri-style Voice Interface with depth */}
-                <div className="relative">
-                  {/* Outer glow rings */}
-                  <div className={`absolute inset-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full transition-all duration-500 ${
-                    isListening 
-                      ? 'bg-gradient-to-r from-purple-400/40 to-blue-400/40 animate-ping scale-110' 
-                      : 'bg-gradient-to-r from-blue-400/20 to-purple-400/20 scale-100'
-                  }`}></div>
-                  <div className={`absolute inset-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full transition-all duration-300 ${
-                    isListening 
-                      ? 'bg-gradient-to-r from-purple-300/30 to-blue-300/30 animate-pulse scale-105' 
-                      : 'bg-gradient-to-r from-blue-300/15 to-purple-300/15'
-                  }`}></div>
-                  
-                  <button
-                    onClick={toggleListening}
-                    disabled={!isSpeechSupported}
-                    className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl ${
-                      !isSpeechSupported
-                        ? 'bg-gray-300 cursor-not-allowed opacity-50'
-                        : isListening 
-                          ? 'bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-600 shadow-purple-500/50' 
-                          : 'bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 hover:from-blue-600 hover:via-purple-700 hover:to-indigo-800 shadow-blue-500/30'
-                    }`}
-                    style={{
-                      boxShadow: isListening 
-                        ? '0 0 40px rgba(147, 51, 234, 0.4), 0 0 80px rgba(59, 130, 246, 0.2), inset 0 2px 4px rgba(255,255,255,0.1)' 
-                        : '0 8px 32px rgba(59, 130, 246, 0.3), inset 0 2px 4px rgba(255,255,255,0.1)'
-                    }}
-                  >
-                    {/* Inner glass effect */}
-                    <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/20 to-transparent"></div>
-                    
-                    {/* Content */}
-                    <div className="relative z-10">
-                      {isListening ? (
-                        <div className="flex items-center justify-center space-x-0.5">
-                          <div className="w-0.5 sm:w-1 bg-white rounded-full animate-pulse" style={{height: '14px', animationDelay: '0ms'}}></div>
-                          <div className="w-0.5 sm:w-1 bg-white rounded-full animate-pulse" style={{height: '20px', animationDelay: '100ms'}}></div>
-                          <div className="w-0.5 sm:w-1 bg-white rounded-full animate-pulse" style={{height: '10px', animationDelay: '200ms'}}></div>
-                          <div className="w-0.5 sm:w-1 bg-white rounded-full animate-pulse" style={{height: '18px', animationDelay: '300ms'}}></div>
-                          <div className="w-0.5 sm:w-1 bg-white rounded-full animate-pulse" style={{height: '8px', animationDelay: '400ms'}}></div>
-                        </div>
-                      ) : (
-                        <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-                          <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-                        </svg>
-                      )}
-                    </div>
-                  </button>
+                <div 
+                  onClick={isSpeechSupported ? toggleListening : undefined}
+                  className={`mic ${isListening ? 'listening' : ''} ${!isSpeechSupported ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  style={{ width: '70px', height: '70px' }}
+                >
+                  <img src="/icons/voice.svg" alt="Voice mic" className="mic-img" />
+                  <div className="pulse-ring" aria-hidden="true"></div>
+                  <div className="eq" aria-hidden="true">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
                 </div>
 
-                {/* Mute Icon - hide on mobile */}
-                <button className="hidden sm:block p-2 md:p-3 text-gray-400 hover:text-gray-600 transition-colors">
+                {/* <button className="hidden sm:block p-2 md:p-3 text-gray-400 hover:text-gray-600 transition-colors">
                   <svg className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
                   </svg>
-                </button>
+                </button> */}
 
                 {/* Spacer for mobile centering */}
                 <div className="sm:hidden w-8"></div>
               </div>
               
               {/* "Speak your answers" text - Hidden on mobile (icon in input box instead), shown on tablet+ */}
-              <div className="hidden sm:block text-center mt-1.5 sm:mt-2">
+              <div className="hidden sm:block text-center">
                 {isSpeechSupported ? (
-                  <p className="text-gray-500 text-xs sm:text-sm font-medium">Speak your answers</p>
+                  <p className="text-gray-500 text-xs font-medium">Speak your answers</p>
                 ) : (
                   <p className="text-gray-400 text-xs sm:text-sm font-medium">Voice input not supported in this browser</p>
                 )}

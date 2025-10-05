@@ -208,6 +208,111 @@ body {
   margin: 0 0.125rem; */
 }
 
+/* Voice Mic Animation Styles */
+.mic {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: inline-block;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mic-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  transition: transform 260ms cubic-bezier(.2,.9,.3,1), filter 260ms;
+  transform-origin: 50% 50%;
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.15));
+}
+
+.pulse-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 88%;
+  height: 88%;
+  transform: translate(-50%, -50%) scale(.85);
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(0,160,255,0.18) 0%, rgba(0,160,255,0.06) 45%, transparent 60%);
+  opacity: 0;
+  transition: transform 360ms cubic-bezier(.2,.9,.3,1), opacity 300ms;
+  will-change: transform, opacity;
+  z-index: 0;
+}
+
+.eq {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 48%;
+  height: 50%;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 6%;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 220ms;
+}
+
+.eq span {
+  display: block;
+  width: 10%;
+  height: 20%;
+  background: linear-gradient(180deg, rgba(0,160,255,0.95), rgba(0,100,205,0.9));
+  border-radius: 3px;
+  transform-origin: bottom center;
+  will-change: transform, height;
+  animation: eqIdle 1200ms infinite ease-in-out;
+  animation-play-state: paused;
+  opacity: 0.95;
+}
+
+.eq span:nth-child(1) { animation-delay: 0ms; }
+.eq span:nth-child(2) { animation-delay: 120ms; }
+.eq span:nth-child(3) { animation-delay: 240ms; }
+.eq span:nth-child(4) { animation-delay: 360ms; }
+.eq span:nth-child(5) { animation-delay: 480ms; }
+
+@keyframes eqIdle {
+  0%   { height: 18%; transform: scaleY(0.6); }
+  20%  { height: 58%; transform: scaleY(1.0); }
+  40%  { height: 32%; transform: scaleY(0.7); }
+  60%  { height: 70%; transform: scaleY(1.1); }
+  80%  { height: 40%; transform: scaleY(0.75); }
+  100% { height: 22%; transform: scaleY(0.65); }
+}
+
+.mic.listening .mic-img {
+  transform: scale(1.06) translateY(-2px);
+  filter: drop-shadow(0 12px 26px rgba(0,140,240,0.12)) saturate(1.05);
+}
+
+.mic.listening .pulse-ring {
+  opacity: 1;
+  transform: translate(-50%,-50%) scale(1.12);
+  animation: ringPulse 1200ms ease-out infinite;
+}
+
+.mic.listening .eq {
+  opacity: 1;
+}
+
+.mic.listening .eq span {
+  animation-play-state: running;
+}
+
+@keyframes ringPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(0,160,255,0.22); }
+  60%  { box-shadow: 0 0 0 18px rgba(0,160,255,0.06); }
+  100% { box-shadow: 0 0 0 36px rgba(0,160,255,0); }
+}
+
 /* Lock vertical page scroll and handle keyboard properly */
 html {
   scroll-behavior: auto; /* Prevent smooth scroll on load */

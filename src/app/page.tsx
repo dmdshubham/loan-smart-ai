@@ -95,33 +95,27 @@ export default function ChatPage() {
             </div>
           </div>
 
-          {/* Voice Interface */}
-          <div className="flex justify-center py-4 sm:py-6 z-10">
-            <button
+          <div className="flex flex-col items-center py-2 sm:py-6 z-10 gap-4">
+            {/* Voice Interface with animation */}
+            <div 
               onClick={toggleListening}
-              className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center transition-all duration-300 ${
-                isListening 
-                  ? 'bg-gradient-to-r from-red-500 to-pink-500 animate-pulse' 
-                  : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
-              }`}
+              className={`mic ${isListening ? 'listening' : ''} cursor-pointer`}
+              style={{ width: '80px', height: '80px' }}
             >
-              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-black bg-opacity-20 flex items-center justify-center">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 flex items-center justify-center">
-                  {isListening ? (
-                    <div className="w-3 h-3 bg-white rounded-full animate-ping"></div>
-                  ) : (
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-                      <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-                    </svg>
-                  )}
-                </div>
+              <img src="/icons/voice.svg" alt="Voice mic" className="mic-img" />
+              <div className="pulse-ring" aria-hidden="true"></div>
+              <div className="eq" aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
               </div>
-            </button>
-          </div>
+            </div>
 
-          <div className="text-center pb-4 sm:pb-6 z-10">
-            <p className="text-gray-500 text-xs sm:text-sm">Speak your answers</p>
+            <p className="text-gray-500 text-xs font-normal">
+              Speak your answers
+            </p>
           </div>
           </div>
         </div>
