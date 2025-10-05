@@ -147,7 +147,7 @@ export function detectDocumentUploadRequest(message: string): DocumentUploadRequ
   const normalizedMessage = message.toLowerCase()
   
   // Check for upload-related keywords but exclude messages with "successfully"
-  const hasSuccessfully = /successfully|success/i.test(message)
+  const hasSuccessfully = /pan|adhar|aadhar|aadhaar/i.test(message)
   const hasUploadKeywords = /upload|attach|send|provide|share|submit/i.test(message)
   
   if (!hasUploadKeywords || hasSuccessfully) {
