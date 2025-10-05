@@ -349,7 +349,7 @@ function AgentChatContent() {
               boxShadow: '0px 0px 20px 0px #00000026'
             }}
           >
-            <div className="bg-gradient-to-br h-[100vh] sm:h-[calc(100dvh-40px)] lg:h-[calc(100dvh-50px)] from-green-50 via-pink-50 to-blue-50 flex flex-col relative overflow-hidden backdrop-blur-sm rounded-none sm:rounded-[16px] lg:rounded-[26px]">
+            <div className="bg-gradient-to-br h-[100dvh] sm:h-[calc(100dvh-40px)] lg:h-[calc(100dvh-50px)] from-green-50 via-pink-50 to-blue-50 flex flex-col relative overflow-hidden backdrop-blur-sm rounded-none sm:rounded-[16px] lg:rounded-[26px]">
               {/* Subtle inner glow */}
               <div className="absolute inset-0 bg-gradient-to-br from-green-100/30 via-pink-100/20 to-blue-100/30 rounded-lg"></div>
             
