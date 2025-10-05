@@ -359,7 +359,7 @@ function AgentChatContent() {
                   {/* Qualtech Logo */}
                   <div className="flex items-center">
                     <img 
-                      src="/icons/Qualtech-blk.png" 
+                      src="/icons/qualtech-blk.png" 
                       alt="Qualtech Logo" 
                       className="h-5 w-auto xs:h-6 sm:h-7 md:h-8 object-contain" 
                     />
