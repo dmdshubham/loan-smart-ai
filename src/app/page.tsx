@@ -48,7 +48,7 @@ export default function ChatPage() {
       
       {/* Content with higher z-index */}
       <div className="relative z-10 flex flex-col ">
-        <img src="/icons/logo.svg" alt="Qualtech Logo" className="w-[80px] h-[26px] sm:w-[120px] sm:h-[40px] absolute top-3 left-4 sm:top-4 sm:left-10 z-10" />
+        <img src="/icons/qualtech-blk.png" alt="Qualtech Logo" className="w-[80px] h-[26px] sm:w-[120px] sm:h-[40px] absolute top-3 left-4 sm:top-4 sm:left-10 z-10" />
       <div className="flex-1 max-w-4xl mx-auto w-full px-3 py-4 sm:px-4 sm:py-8 mt-12 sm:mt-10">
         <div 
           className="p-1 rounded-[20px] sm:rounded-[30px]"
@@ -65,27 +65,22 @@ export default function ChatPage() {
           zIndex:0
         }}
       />
-          
-          {/* Brand Header */}
-          <div className="text-center py-4 sm:py-8 bg-gradient-to-b from-blue-50 to-white">
-            <h2 className="text-2xl sm:text-3xl font-bold">
-            <span className="text-blue-600">mi</span>
-              <span className="text-blue-600">FIN</span>
-              <span className="text-green-500">.AI</span>
-            </h2>
+          <div className="bg-white rounded-2xl p-0">
+
+          <img src="/icons/miFin-blk.png" alt="Frida" className="  m-auto w-[200px] h-[40px]  sm:w-[150px] sm:h-[70px]" />
           </div>
 
-          {/* Messages Area */}
-          <div className="flex-1 px-4 sm:px-8 py-4 overflow-y-auto z-10">
+          {/* Messages Area */} 
+          <div className="flex-1 mt-4 sm:mt-10 px-4 sm:px-8 py-4 z-10">
             <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-0">
               <div className="flex flex-col items-center gap-2 w-full sm:w-[20%]">
                 <img src="/images/freda.png" alt="Frida" className="w-[100px] h-[100px] sm:w-[150px] sm:h-[150px]" />
                 <p className="text-gray-800 text-base sm:text-lg text-center leading-relaxed">
                 Frida
                 </p>
-                <p className="text-gray-800 text-center font-italic text-xs sm:text-sm leading-relaxed">
+                {/* <p className="text-gray-800 text-center font-italic text-xs sm:text-sm leading-relaxed">
                 AI-Enabled Credit Assistant
-                </p>
+                </p> */}
               </div>
               <div className="w-full sm:w-[80%]">
                 <div className="rounded-2xl px-4 sm:px-6 py-3 sm:py-4">

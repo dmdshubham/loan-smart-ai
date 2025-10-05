@@ -53,13 +53,13 @@ export function processBotMessageHTML(htmlContent: string): string {
     if (url === '#') {
       return `${emojiPrefix}<a href="#" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" onclick="event.preventDefault();">${text}</a>`;
     }
-    return `${emojiPrefix}<a href="${url}" class="text-blue-600 underline hover:text-blue-800" onclick="event.preventDefault(); window.open('${url}', '_blank', '${param1}')">${text}</a>`;
+    return `${emojiPrefix}<a href="${url}" class="text-blue-600 underline hover:text-blue-800" onclick="event.preventDefault(); window.open('${url}', '_blank', 'noopener,noreferrer')">${text}</a>`;
   });
   
   // Handle regular URLs that are not in markdown format
   const urlPattern = /(?<!["']\s*|=\s*|<[^>]*>)(https?:\/\/[^\s<>"']+)(?![^<]*>|[^<>]*<\/)/g;
   processedHTML = processedHTML.replace(urlPattern, (url) => {
-    return `<a href="${url}" class="text-blue-600 underline hover:text-blue-800" onclick="event.preventDefault(); window.open('${url}', '_blank', '${param1}')">${url}</a>`;
+    return `<a href="${url}" class="text-blue-600 underline hover:text-blue-800" onclick="event.preventDefault(); window.open('${url}', '_blank', 'noopener,noreferrer')">${url}</a>`;
   });
   
   // Mask mobile numbers - various patterns

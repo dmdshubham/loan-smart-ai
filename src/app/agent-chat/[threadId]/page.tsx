@@ -357,17 +357,21 @@ function AgentChatContent() {
               <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b border-gray-200/50 px-3 sm:px-4 md:px-3 py-2 md:py-3">
                 <div className="flex items-center justify-between">
                   {/* Qualtech Logo */}
-                  <div className="flex items-center space-x-2">
-                    <img src="/icons/logo.svg" alt="Qualtech Logo" className="w-16 h-6 sm:w-20 sm:h-7 md:w-[90px] md:h-[35px]" />
+                  <div className="flex items-center">
+                    <img 
+                      src="/icons/Qualtech-blk.png" 
+                      alt="Qualtech Logo" 
+                      className="h-5 w-auto xs:h-6 sm:h-7 md:h-8 object-contain" 
+                    />
                   </div>
 
-                  {/* Center - miFIN.AI branding and progress */}
-                  <div className="items-center justify-center space-x-3 md:space-x-6">
-                    <h1 className="text-lg md:text-2xl font-bold">
-                      <span className="text-blue-600">mi</span>
-                      <span className="text-blue-600">FIN</span>
-                      <span className="text-green-500">.AI</span>
-                    </h1>
+                  {/* Center - miFIN.AI branding */}
+                  <div className="flex items-center justify-center flex-shrink-0">
+                    <img 
+                      src="/icons/miFin-blk.png" 
+                      alt="miFin" 
+                      className="h-6 w-auto xs:h-8 sm:h-10 md:h-12 object-contain" 
+                    />
                   </div>
                   
                   {/* User profile */}
