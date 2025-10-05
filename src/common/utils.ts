@@ -44,6 +44,23 @@ export function processBotMessageHTML(htmlContent: string): string {
   
   // Ensure proper HTML structure
   let processedHTML = htmlContent.trim();
+
+  // Handle markdown-style links with emojis [text](url)
+  const markdownLinkPattern = /(\p{Emoji})?\s*\[(.*?)\]\((.*?)\)/gu;
+  processedHTML = processedHTML.replace(markdownLinkPattern, (match, emoji, text, url) => {
+    const emojiPrefix = emoji ? emoji + ' ' : '';
+    // If URL is #, make it a button-style link
+    if (url === '#') {
+      return `${emojiPrefix}<a href="#" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" onclick="event.preventDefault();">${text}</a>`;
+    }
+    return `${emojiPrefix}<a href="${url}" class="text-blue-600 underline hover:text-blue-800" onclick="event.preventDefault(); window.open('${url}', '_blank', '${param1}')">${text}</a>`;
+  });
+  
+  // Handle regular URLs that are not in markdown format
+  const urlPattern = /(?<!["']\s*|=\s*|<[^>]*>)(https?:\/\/[^\s<>"']+)(?![^<]*>|[^<>]*<\/)/g;
+  processedHTML = processedHTML.replace(urlPattern, (url) => {
+    return `<a href="${url}" class="text-blue-600 underline hover:text-blue-800" onclick="event.preventDefault(); window.open('${url}', '_blank', '${param1}')">${url}</a>`;
+  });
   
   // Mask mobile numbers - various patterns
   // Pattern 1: *******035 (7+ asterisks followed by 3-4 digits)

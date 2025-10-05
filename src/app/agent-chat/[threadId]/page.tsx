@@ -248,9 +248,9 @@ function AgentChatContent() {
     
     return (
       <div className="mt-1 space-y-2">
-        <p className="text-xs text-white font-medium">
+        {/* <p className="text-xs text-white font-medium">
         {formatDocumentType(documentType)} {urls.length > 1 ? `(${urls.length} files)` : ''}
-        </p>
+        </p> */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {fields.map((field, index) => {
             const isPdf = field.url.toLowerCase().endsWith('.pdf');
@@ -469,8 +469,8 @@ function AgentChatContent() {
                       <div className="bg-blue-500 text-white rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 max-w-[85%] sm:max-w-sm shadow-sm">
                         {hasDocumentUrls ? (
                           <>
-                            <p className="text-xs sm:text-sm leading-relaxed mb-2">
-                              Uploaded {formatDocumentType(parsedUrls.documentType!)}
+                            <p className="text-xs leading-relaxed mb-2">
+                              Uploaded {formatDocumentType(parsedUrls.documentType!)} {parsedUrls.urls.length > 1 ? `(${parsedUrls.urls.length} files)` : ''}
                             </p>
                             <div>
                               {renderDocumentUrls(parsedUrls)}

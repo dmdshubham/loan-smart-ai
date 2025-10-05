@@ -243,11 +243,11 @@ const RightPanel = forwardRef<RightPanelRef, RightPanelProps>((props, ref) => {
                                   }}
                                 />
                               ) : isPdf ? (
-                                <div className="w-full h-full flex flex-col items-center justify-center bg-red-50">
-                                  <svg className="w-10 h-10 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                <div className="w-full h-full flex flex-col items-center justify-center bg-green-50">
+                                  <svg className="w-10 h-10 text-green-500" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18.5,9H13V3.5L18.5,9M6,20V4H12V10H18V20H6Z" />
                                   </svg>
-                                  <span className="text-xs text-red-600 mt-1">PDF</span>
+                                  <span className="text-xs text-green-600 mt-1">PDF</span>
                                 </div>
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center bg-gray-100">
@@ -260,7 +260,7 @@ const RightPanel = forwardRef<RightPanelRef, RightPanelProps>((props, ref) => {
                             
                             {/* Verification Badge */}
                             <div className="absolute top-1 right-1">
-                              {isVerified ? (
+                              {fileUrl ? (
                                 <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-md">
                                   <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
