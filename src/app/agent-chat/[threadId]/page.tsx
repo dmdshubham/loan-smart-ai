@@ -86,7 +86,7 @@ function AgentChatContent() {
 
   // Auto-scroll to bottom when messages change or streaming updates
   useEffect(() => {
-    if (messagesEndRef.current) {
+    if (messagesEndRef.current && messages.length > 3) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, currentStreamingMessage, uploadedUrls]);
@@ -180,15 +180,6 @@ function AgentChatContent() {
     rightPanelRef.current?.resetExpandedSections();
     
     await sendMessage(text, []);
-  };
-
-  const handleFileUploaded = (fileUrl: string) => {
-    setAttachedFiles(prev => [...prev, fileUrl]);
-  };
-
-  const handleFileUploadError = (error: string) => {
-    console.error('File upload error:', error);
-    // You could show a toast notification here
   };
 
   const handleDocumentUpload = async (fileUrls: string[], documentType: string) => {
@@ -352,13 +343,13 @@ function AgentChatContent() {
       <div className="flex-1 flex max-w-7xl mx-auto w-full z-10">
         <div className="flex-1 sm:ml-1 my-0 sm:my-2 sm:mb-2 lg:my-4">
           <div 
-            className="p-0 sm:p-1 rounded-none sm:rounded-[20px] lg:rounded-[30px] h-[100dvh] sm:h-[calc(100dvh-32px)] lg:h-[calc(100vh-42px)] overflow-hidden"
+            className="p-0 sm:p-1 rounded-none sm:rounded-[20px] lg:rounded-[30px] h-[100dvh] sm:h-[calc(100dvh-32px)] lg:h-[calc(100dvh-42px)] overflow-hidden"
             style={{
               background: 'linear-gradient(180deg, #2E71FE 0%, #6AFFB6 100%)',
               boxShadow: '0px 0px 20px 0px #00000026'
             }}
           >
-            <div className="bg-gradient-to-br h-[100vh] sm:h-[calc(100dvh-40px)] lg:h-[calc(100vh-50px)] from-green-50 via-pink-50 to-blue-50 flex flex-col relative overflow-hidden backdrop-blur-sm rounded-none sm:rounded-[16px] lg:rounded-[26px]">
+            <div className="bg-gradient-to-br h-[100vh] sm:h-[calc(100dvh-40px)] lg:h-[calc(100dvh-50px)] from-green-50 via-pink-50 to-blue-50 flex flex-col relative overflow-hidden backdrop-blur-sm rounded-none sm:rounded-[16px] lg:rounded-[26px]">
               {/* Subtle inner glow */}
               <div className="absolute inset-0 bg-gradient-to-br from-green-100/30 via-pink-100/20 to-blue-100/30 rounded-lg"></div>
             

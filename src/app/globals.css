@@ -32,6 +32,8 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  overscroll-behavior-y: none; /* Prevent bounce scroll on iOS */
+  overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
 /* Bot message HTML content styling */
@@ -131,4 +133,27 @@ body {
   font-weight: 600;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin: 0 0.125rem; */
+}
+
+/* Lock vertical page scroll and handle keyboard properly */
+html {
+  scroll-behavior: auto; /* Prevent smooth scroll on load */
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  height: 100%;
+  overflow: hidden;
+  position: fixed;
+  inset: 0;
+  overscroll-behavior: none;
+}
+
+/* Ensure all root containers fill space */
+body > div,
+body > main,
+#__next {
+  height: 100%;
+  overflow: hidden;
 }
