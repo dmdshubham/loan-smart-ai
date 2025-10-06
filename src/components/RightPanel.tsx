@@ -57,7 +57,6 @@ const RightPanel = forwardRef<RightPanelRef, RightPanelProps>((props, ref) => {
     expandHighlightedSections,
   } = useSocketData();
 
-  console.log("animatedFields",animatedFields);
   // Expose methods to parent component via ref
   useImperativeHandle(ref, () => ({
     resetExpandedSections,

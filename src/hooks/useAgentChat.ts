@@ -36,6 +36,7 @@ export function useAgentChat(initialThreadId: string | undefined): UseAgentChatR
   const abortControllerRef = useRef<AbortController | null>(null);
   const hasInitializedRef = useRef<boolean>(false);
 
+  
   useEffect(() => { isStreamingRef.current = isStreaming; }, [isStreaming]);
   useEffect(() => { streamingMessageRef.current = currentStreamingMessage; }, [currentStreamingMessage]);
 
@@ -61,19 +62,18 @@ export function useAgentChat(initialThreadId: string | undefined): UseAgentChatR
 
   const appendStreamingToken = (token: string) => {
     const piece = typeof token === 'string' ? token : String(token ?? '');
+
     setCurrentStreamingMessage(prev => {
       const combined = (prev ?? '') + piece;
-      streamingMessageRef.current = combined;
+      streamingMessageRef.current = combined; 
       return combined;
     });
     if (!isStreamingRef.current) {
       setIsStreaming(true);
       isStreamingRef.current = true;
     }
-    if (streamingTimeoutRef.current) clearTimeout(streamingTimeoutRef.current);
-    streamingTimeoutRef.current = setTimeout(() => {
-      finalizeStreamingMessage();
-    }, 30000);
+
+    // No debounce: finalize only when stream_end/done arrives
   };
 
   const handleSseEvent = (data: any) => {
@@ -91,14 +91,31 @@ export function useAgentChat(initialThreadId: string | undefined): UseAgentChatR
       const tokenContent = data.content ?? data.token ?? '';
       if (tokenContent !== undefined && tokenContent !== null) {
         if (isThinking) setIsThinking(false);
-        appendStreamingToken(tokenContent);
+        // Do not append token if we already received the final message
+        if (!isStreamingRef.current && streamingMessageRef.current === '') {
+          // Start a fresh streaming session
+          appendStreamingToken(tokenContent);
+        } else {
+          appendStreamingToken(tokenContent);
+        }
       }
       return;
     }
     if (data?.type === 'message' || data?.content || data?.text) {
       const messageText = data.content ?? data.text ?? data.message ?? '';
       if (messageText) {
-        if (isStreamingRef.current) finalizeStreamingMessage();
+        // Prefer the full message from server over partial token accumulation.
+        // Do not finalize the token stream as a separate message to avoid duplication.
+        if (isStreamingRef.current) {
+          setIsStreaming(false);
+          setCurrentStreamingMessage('');
+          streamingMessageRef.current = '';
+          isStreamingRef.current = false;
+          if (streamingTimeoutRef.current) {
+            clearTimeout(streamingTimeoutRef.current);
+            streamingTimeoutRef.current = null;
+          }
+        }
         if (isThinking) setIsThinking(false);
         setMessages(prev => [...prev, {
           id: Date.now() + Math.random(),
