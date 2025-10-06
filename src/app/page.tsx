@@ -67,11 +67,11 @@ export default function ChatPage() {
       />
           <div className="bg-white rounded-2xl p-0">
 
-          <img src="/icons/myfinai.jpeg"alt="Frida" className="  m-auto w-[200px] h-[40px]  sm:w-[150px] sm:h-[70px]" />
+          <img src="/icons/myfinai.jpeg"alt="Frida" className="  m-auto h-[40px]  sm:w-[150px] sm:h-[70px]" />
           </div>
 
           {/* Messages Area */} 
-          <div className="flex-1 mt-4 sm:mt-10 px-4 sm:px-8 py-4 z-10">
+          <div className="flex-1 mt-4 sm:mt-10 px-4 sm:px-8 py-4 z-10 flex items-center">
             <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-0">
               <div className="flex flex-col items-center gap-2 w-full sm:w-[20%]">
                 <img src="/images/freda.png" alt="Frida" className="w-[100px] h-[100px] sm:w-[150px] sm:h-[150px]" />
