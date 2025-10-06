@@ -319,21 +319,21 @@ body {
 html {
   scroll-behavior: auto; /* Prevent smooth scroll on load */
   height: 100%;
-  overflow: hidden;
+  overflow: hidden !important;
 }
 
 body {
   height: 100%;
-  overflow: hidden;
+  overflow: hidden !important;
   position: fixed;
   inset: 0;
   overscroll-behavior: none;
 }
 
-/* Ensure all root containers fill space */
+/* Ensure all root containers fill space
 body > div,
 body > main,
 #__next {
   height: 100%;
   overflow: hidden;
-}
+} */
