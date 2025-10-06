@@ -375,7 +375,7 @@ function AgentChatContent() {
                     <img 
                       src="/icons/qualtech-blk.png" 
                       alt="Qualtech Logo" 
-                      className="h-5 w-auto xs:h-6 sm:h-7 md:h-8 object-contain" 
+                      className="h-6 w-auto xs:h-6 sm:h-7 md:h-8 object-contain" 
                     />
                   </div>
 
@@ -384,7 +384,7 @@ function AgentChatContent() {
                     <img 
                       src="/icons/myfinai.jpeg" 
                       alt="miFin" 
-                      className="h-6 w-auto sm:h-10 md:h-12 object-contain" 
+                      className="h-8 w-auto sm:h-10 md:h-12 object-contain" 
                     />
                   </div>
                   
