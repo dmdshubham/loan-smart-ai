@@ -85,11 +85,25 @@ function AgentChatContent() {
   }, []);
 
   // Auto-scroll to bottom when messages change or streaming updates
+  // useEffect(() => {
+  //   if (messagesEndRef.current && messages.length > 0) {
+  //     messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+  //   }
+  // }, [messages, currentStreamingMessage, uploadedUrls]);
+
+   // Auto-scroll to bottom when messages change or streaming updates
   useEffect(() => {
-    if (messagesEndRef.current && messages.length > 3) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    // Only scroll if we have messages and we're not on initial load
+    if (messagesEndRef.current && messages.length > 0) {
+      // Use instant scroll on mobile to prevent visual scroll issues
+      const isMobile = window.innerWidth < 640;
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: isMobile ? 'instant' : 'smooth',
+        block: 'end'
+      });
     }
-  }, [messages, currentStreamingMessage, uploadedUrls]);
+  }, [messages.length, currentStreamingMessage]);
+
 
   // Initialize speech recognition
   useEffect(() => {
@@ -442,10 +456,8 @@ function AgentChatContent() {
                 
                 // Detect document upload request for bot messages
                 const uploadRequest = message.isBot ? detectDocumentUploadRequest(message.text) : null;
-                console.log('uploadRequest', uploadRequest);
                 const showUploadUI = uploadRequest?.isUploadRequest && !hasDocumentUrls && index === messages.length - 1;
 
-                console.log('uploadRequest', uploadRequest,showUploadUI);
                 return (
                   <div key={`message-${message.id}-${index}`} className={`flex ${message.isBot ? 'justify-start' : 'justify-end'}`}>
                     {message.isBot ? (
@@ -475,7 +487,7 @@ function AgentChatContent() {
                       <div className="bg-blue-500 text-white rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 max-w-[85%] sm:max-w-sm shadow-sm">
                         {hasDocumentUrls ? (
                           <>
-                            <p className="text-xs leading-relaxed mb-2">
+                            <p className="text-sm leading-relaxed mb-2">
                               Uploaded {formatDocumentType(parsedUrls.documentType!)} {parsedUrls.urls.length > 1 ? `(${parsedUrls.urls.length} files)` : ''}
                             </p>
                             <div>
@@ -588,7 +600,7 @@ function AgentChatContent() {
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyPress={handleTextareaKeyPress}
                     placeholder="Type your message here..."
-                    className="flex-1 outline-none text-xs sm:text-sm text-gray-700 placeholder-gray-400"
+                    className="flex-1 outline-none text-sm sm:text-sm text-gray-700 placeholder-gray-400"
                   />
                   
                   {/* Microphone icon - Shown only on mobile, beside send button */}
