@@ -73,7 +73,7 @@ export function useAgentChat(initialThreadId: string | undefined): UseAgentChatR
     if (streamingTimeoutRef.current) clearTimeout(streamingTimeoutRef.current);
     streamingTimeoutRef.current = setTimeout(() => {
       finalizeStreamingMessage();
-    }, 3000);
+    }, 30000);
   };
 
   const handleSseEvent = (data: any) => {
