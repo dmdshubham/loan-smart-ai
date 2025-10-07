@@ -40,31 +40,14 @@ export function useAgentChat(initialThreadId: string | undefined): UseAgentChatR
   useEffect(() => { isStreamingRef.current = isStreaming; }, [isStreaming]);
   useEffect(() => { streamingMessageRef.current = currentStreamingMessage; }, [currentStreamingMessage]);
 
-  const finalizeStreamingMessage = () => {
-    const text = (streamingMessageRef.current || '').trim();
-    if (text) {
-      setMessages(prev => [...prev, {
-        id: Date.now() + Math.random(),
-        text,
-        isBot: true,
-        timestamp: new Date()
-      }]);
-    }
-    setCurrentStreamingMessage('');
-    setIsStreaming(false);
-    streamingMessageRef.current = '';
-    isStreamingRef.current = false;
-    if (streamingTimeoutRef.current) {
-      clearTimeout(streamingTimeoutRef.current);
-      streamingTimeoutRef.current = null;
-    }
-  };
+  // finalize via streamingMessageRef.current at call sites instead of a helper
 
   const appendStreamingToken = (token: string) => {
     const piece = typeof token === 'string' ? token : String(token ?? '');
 
     setCurrentStreamingMessage(prev => {
       const combined = (prev ?? '') + piece;
+      console.log("combined",combined);
       streamingMessageRef.current = combined; 
       return combined;
     });
@@ -72,10 +55,9 @@ export function useAgentChat(initialThreadId: string | undefined): UseAgentChatR
       setIsStreaming(true);
       isStreamingRef.current = true;
     }
-
-    // No debounce: finalize only when stream_end/done arrives
   };
 
+  console.log("streamingMessageRef",streamingMessageRef.current);
   const handleSseEvent = (data: any) => {
     if (data?.type === 'thread_id' && data?.thread_id) {
       // Only update threadId if we don't have one from URL (coming from home page)
@@ -99,36 +81,6 @@ export function useAgentChat(initialThreadId: string | undefined): UseAgentChatR
           appendStreamingToken(tokenContent);
         }
       }
-      return;
-    }
-    if (data?.type === 'message' || data?.content || data?.text) {
-      const messageText = data.content ?? data.text ?? data.message ?? '';
-      if (messageText) {
-        // Prefer the full message from server over partial token accumulation.
-        // Do not finalize the token stream as a separate message to avoid duplication.
-        if (isStreamingRef.current) {
-          setIsStreaming(false);
-          setCurrentStreamingMessage('');
-          streamingMessageRef.current = '';
-          isStreamingRef.current = false;
-          if (streamingTimeoutRef.current) {
-            clearTimeout(streamingTimeoutRef.current);
-            streamingTimeoutRef.current = null;
-          }
-        }
-        if (isThinking) setIsThinking(false);
-        setMessages(prev => [...prev, {
-          id: Date.now() + Math.random(),
-          text: messageText,
-          isBot: true,
-          timestamp: new Date()
-        }]);
-      }
-      return;
-    }
-    if (data?.type === 'stream_end' || data?.type === 'done') {
-      if (isStreamingRef.current) finalizeStreamingMessage();
-      setIsThinking(false);
       return;
     }
   };
@@ -162,7 +114,25 @@ export function useAgentChat(initialThreadId: string | undefined): UseAgentChatR
         await readSseStream(
           response,
           (data) => handleSseEvent(data),
-          () => { if (isStreamingRef.current) finalizeStreamingMessage(); setIsThinking(false); },
+          () => { 
+            if (isStreamingRef.current) {
+              const text = (streamingMessageRef.current || '').trim();
+              if (text) {
+                setMessages(prev => [...prev, {
+                  id: Date.now() + Math.random(),
+                  text,
+                  isBot: true,
+                  timestamp: new Date()
+                }]);
+              }
+              setCurrentStreamingMessage('');
+              setIsStreaming(false);
+              streamingMessageRef.current = '';
+              isStreamingRef.current = false;
+              if (streamingTimeoutRef.current) { clearTimeout(streamingTimeoutRef.current); streamingTimeoutRef.current = null; }
+            }
+            setIsThinking(false); 
+          },
           (err) => { setError('Connection interrupted. Please try again.'); setIsThinking(false); }
         );
       } catch (err) {
@@ -185,7 +155,22 @@ export function useAgentChat(initialThreadId: string | undefined): UseAgentChatR
     const trimmed = (text || '').trim();
     if (!trimmed && fileUrls.length === 0) return;
 
-    if (isStreamingRef.current) finalizeStreamingMessage();
+    if (isStreamingRef.current) {
+      const text = (streamingMessageRef.current || '').trim();
+      if (text) {
+        setMessages(prev => [...prev, {
+          id: Date.now() + Math.random(),
+          text,
+          isBot: true,
+          timestamp: new Date()
+        }]);
+      }
+      setCurrentStreamingMessage('');
+      setIsStreaming(false);
+      streamingMessageRef.current = '';
+      isStreamingRef.current = false;
+      if (streamingTimeoutRef.current) { clearTimeout(streamingTimeoutRef.current); streamingTimeoutRef.current = null; }
+    }
     setIsStreaming(false);
     setCurrentStreamingMessage('');
     if (streamingTimeoutRef.current) { clearTimeout(streamingTimeoutRef.current); streamingTimeoutRef.current = null; }
@@ -209,7 +194,25 @@ export function useAgentChat(initialThreadId: string | undefined): UseAgentChatR
       await readSseStream(
         response,
         (data) => handleSseEvent(data),
-        () => { if (isStreamingRef.current) finalizeStreamingMessage(); setIsThinking(false); },
+        () => { 
+          if (isStreamingRef.current) {
+            const text = (streamingMessageRef.current || '').trim();
+            if (text) {
+              setMessages(prev => [...prev, {
+                id: Date.now() + Math.random(),
+                text,
+                isBot: true,
+                timestamp: new Date()
+              }]);
+            }
+            setCurrentStreamingMessage('');
+            setIsStreaming(false);
+            streamingMessageRef.current = '';
+            isStreamingRef.current = false;
+            if (streamingTimeoutRef.current) { clearTimeout(streamingTimeoutRef.current); streamingTimeoutRef.current = null; }
+          }
+          setIsThinking(false); 
+        },
         () => { setIsThinking(false); }
       );
     } catch (err) {
@@ -217,6 +220,9 @@ export function useAgentChat(initialThreadId: string | undefined): UseAgentChatR
       setIsThinking(false);
     }
   };
+
+  console.log("currentStreamingMessage",currentStreamingMessage);
+
 
   return {
     actualThreadId,

@@ -42,7 +42,8 @@ export async function readSseStream(
         if (trimmed === '[DONE]') {
           if (!doneCalled) {
             doneCalled = true;
-            onDone?.();
+            // Micro-delay to allow any pending token state updates to flush
+            setTimeout(() => onDone?.(), 0);
           }
           continue;
         }
@@ -66,7 +67,7 @@ export async function readSseStream(
       if (trimmed === '[DONE]') {
         if (!doneCalled) {
           doneCalled = true;
-          onDone?.();
+          setTimeout(() => onDone?.(), 0);
         }
       } else {
         try {
@@ -78,7 +79,7 @@ export async function readSseStream(
       }
     }
 
-    if (!doneCalled) onDone?.();
+    if (!doneCalled) setTimeout(() => onDone?.(), 0);
   } catch (err) {
     onError?.(err);
   }

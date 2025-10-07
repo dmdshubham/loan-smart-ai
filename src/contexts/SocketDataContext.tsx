@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import { socketService, ConversationVariable, ApplicantData as SocketApplicantData, FieldItem, StageData } from '@/service/socket';
 
 interface SocketDataContextValue {
@@ -39,6 +39,28 @@ export const SocketDataProvider: React.FC<SocketDataProviderProps> = ({
   const [animatedFields, setAnimatedFields] = useState<Set<string>>(new Set());
   const [sectionUpdateTrigger, setSectionUpdateTrigger] = useState<number>(0);
   const [lastHighlightedSections, setLastHighlightedSections] = useState<Set<string>>(new Set());
+  const lastApplicantSnapshotRef = useRef<string | null>(null);
+  const lastVariablesSnapshotRef = useRef<string | null>(null);
+
+  // Order-insensitive stringify for objects, preserves array order
+  const stableStringify = useCallback((value: any): string => {
+    const seen = new WeakSet();
+    const normalize = (val: any): any => {
+      if (val === null || typeof val !== 'object') return val;
+      if (seen.has(val)) return undefined;
+      seen.add(val);
+      if (Array.isArray(val)) return val.map(normalize);
+      const keys = Object.keys(val).sort();
+      const out: Record<string, any> = {};
+      for (const k of keys) out[k] = normalize(val[k]);
+      return out;
+    };
+    try {
+      return JSON.stringify(normalize(value));
+    } catch {
+      return JSON.stringify(value);
+    }
+  }, []);
 
   // Helper function to deep compare values
   const deepCompareValues = useCallback((val1: any, val2: any): boolean => {
@@ -86,6 +108,13 @@ export const SocketDataProvider: React.FC<SocketDataProviderProps> = ({
   // Handle applicant data updates
   const handleApplicantDataUpdate = useCallback((data: SocketApplicantData) => {
     console.log('Applicant data updated:', data);
+    // Deduplicate identical applicant details payloads
+    const applicantSnapshot = stableStringify(data?.applicant_details || {});
+    if (lastApplicantSnapshotRef.current === applicantSnapshot) {
+      console.log('Applicant data unchanged (dedup) – skipping processing');
+      return;
+    }
+    lastApplicantSnapshotRef.current = applicantSnapshot;
     
     // Get the section names from the new data
     const newSectionNames = Object.keys(data.applicant_details || {});
@@ -198,11 +227,18 @@ export const SocketDataProvider: React.FC<SocketDataProviderProps> = ({
       
       return data;
     });
-  }, [deepCompareValues]);
+  }, [deepCompareValues, stableStringify]);
 
   // Handle conversation variables updates
   const handleVariablesUpdate = useCallback((variables: ConversationVariable[]) => {
     console.log('Variables updated:', variables);
+    // Deduplicate identical variables payloads
+    const variablesSnapshot = stableStringify(variables || []);
+    if (lastVariablesSnapshotRef.current === variablesSnapshot) {
+      console.log('Variables unchanged (dedup) – skipping processing');
+      return;
+    }
+    lastVariablesSnapshotRef.current = variablesSnapshot;
     
     // Detect new variables and value changes
     setConversationVariables((prevVariables) => {
@@ -293,7 +329,7 @@ export const SocketDataProvider: React.FC<SocketDataProviderProps> = ({
       
       return variables;
     });
-  }, [isFirstLoad]);
+  }, [isFirstLoad, stableStringify]);
 
   // Handle stage data updates
   const handleStageDataUpdate = useCallback((data: StageData) => {
