@@ -115,23 +115,26 @@ export function useAgentChat(initialThreadId: string | undefined): UseAgentChatR
           response,
           (data) => handleSseEvent(data),
           () => { 
-            if (isStreamingRef.current) {
-              const text = (streamingMessageRef.current || '').trim();
-              if (text) {
-                setMessages(prev => [...prev, {
-                  id: Date.now() + Math.random(),
-                  text,
-                  isBot: true,
-                  timestamp: new Date()
-                }]);
+            // Small delay to ensure last token is fully flushed to refs/state before finalizing
+            setTimeout(() => {
+              if (isStreamingRef.current) {
+                const text = (streamingMessageRef.current || '');
+                if (text) {
+                  setMessages(prev => [...prev, {
+                    id: Date.now() + Math.random(),
+                    text,
+                    isBot: true,
+                    timestamp: new Date()
+                  }]);
+                }
+                setCurrentStreamingMessage('');
+                setIsStreaming(false);
+                streamingMessageRef.current = '';
+                isStreamingRef.current = false;
+                if (streamingTimeoutRef.current) { clearTimeout(streamingTimeoutRef.current); streamingTimeoutRef.current = null; }
               }
-              setCurrentStreamingMessage('');
-              setIsStreaming(false);
-              streamingMessageRef.current = '';
-              isStreamingRef.current = false;
-              if (streamingTimeoutRef.current) { clearTimeout(streamingTimeoutRef.current); streamingTimeoutRef.current = null; }
-            }
-            setIsThinking(false); 
+              setIsThinking(false);
+            }, 100);
           },
           (err) => { setError('Connection interrupted. Please try again.'); setIsThinking(false); }
         );
@@ -195,23 +198,26 @@ export function useAgentChat(initialThreadId: string | undefined): UseAgentChatR
         response,
         (data) => handleSseEvent(data),
         () => { 
-          if (isStreamingRef.current) {
-            const text = (streamingMessageRef.current || '').trim();
-            if (text) {
-              setMessages(prev => [...prev, {
-                id: Date.now() + Math.random(),
-                text,
-                isBot: true,
-                timestamp: new Date()
-              }]);
+          // Small delay to ensure last token is fully flushed to refs/state before finalizing
+          setTimeout(() => {
+            if (isStreamingRef.current) {
+              const text = (streamingMessageRef.current || '');
+              if (text) {
+                setMessages(prev => [...prev, {
+                  id: Date.now() + Math.random(),
+                  text,
+                  isBot: true,
+                  timestamp: new Date()
+                }]);
+              }
+              setCurrentStreamingMessage('');
+              setIsStreaming(false);
+              streamingMessageRef.current = '';
+              isStreamingRef.current = false;
+              if (streamingTimeoutRef.current) { clearTimeout(streamingTimeoutRef.current); streamingTimeoutRef.current = null; }
             }
-            setCurrentStreamingMessage('');
-            setIsStreaming(false);
-            streamingMessageRef.current = '';
-            isStreamingRef.current = false;
-            if (streamingTimeoutRef.current) { clearTimeout(streamingTimeoutRef.current); streamingTimeoutRef.current = null; }
-          }
-          setIsThinking(false); 
+            setIsThinking(false);
+          }, 100);
         },
         () => { setIsThinking(false); }
       );
