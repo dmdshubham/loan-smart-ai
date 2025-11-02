@@ -86,9 +86,11 @@ export default function DocumentUploadInline({
       // Upload file and get clean URL
       const uploadResult = await UploadService.uploadFileWithPresignedUrl(file);
       
-      // Save image URL to localStorage for user photo
+      // Save image URL to localStorage for user photo (only if not already stored)
       const isImage = file.type.startsWith('image/');
-      if (isImage && uploadResult.cleanUrl) {
+      const existingUserPhoto = localStorage.getItem('userPhoto');
+      
+      if (isImage && uploadResult.cleanUrl && !existingUserPhoto) {
         localStorage.setItem('userPhoto', uploadResult.cleanUrl);
         localStorage.setItem('userPhotoTimestamp', new Date().toISOString());
         console.log('Photo URL saved to localStorage:', uploadResult.cleanUrl);
@@ -97,6 +99,8 @@ export default function DocumentUploadInline({
         window.dispatchEvent(new CustomEvent('userPhotoUpdated', { 
           detail: { photoUrl: uploadResult.cleanUrl } 
         }));
+      } else if (isImage && existingUserPhoto) {
+        console.log('User photo already exists in localStorage, skipping save');
       }
       
       // Update with success - find by file object reference
